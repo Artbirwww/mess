@@ -47,3 +47,25 @@ body {
 .cursor-blink {
   animation: blink 1s step-end infinite;
 }
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  #root {
+    padding: 10px;
+  }
+  
+  /* Уменьшаем шрифты на мобильных */
+  body {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  #root {
+    padding: 5px;
+  }
+  
+  body {
+    font-size: 12px;
+  }
+}

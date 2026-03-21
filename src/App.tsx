@@ -20,6 +20,16 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showSearch, setShowSearch] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
@@ -49,6 +59,7 @@ function App() {
   const handleLogout = async () => {
     await auth.signOut();
     setSelectedUser(null);
+    setShowSearch(true);
   };
 
   useEffect(() => {
@@ -67,9 +78,11 @@ function App() {
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100vh',
-        fontFamily: 'JetBrains Mono, monospace'
+        fontFamily: 'JetBrains Mono, monospace',
+        padding: '20px',
+        textAlign: 'center'
       }}>
-        <div style={{ color: '#00ff9d' }}>
+        <div style={{ color: '#00ff9d', fontSize: isMobile ? '14px' : '16px' }}>
           {'> LOADING SYSTEM...'}
           <span className="cursor-blink">_</span>
         </div>
@@ -85,7 +98,7 @@ function App() {
     <div style={{ 
       maxWidth: 1400, 
       margin: '0 auto', 
-      padding: 20,
+      padding: isMobile ? '10px' : '20px',
       fontFamily: 'JetBrains Mono, monospace'
     }}>
       {/* Terminal Header */}
@@ -93,18 +106,25 @@ function App() {
         background: '#0a0e1a',
         border: '1px solid #00ff9d',
         borderRadius: 0,
-        marginBottom: 20,
+        marginBottom: isMobile ? '10px' : '20px',
         overflow: 'hidden'
       }}>
         <div style={{ 
           background: '#1a1e2a',
-          padding: '12px 20px',
+          padding: isMobile ? '8px 12px' : '12px 20px',
           borderBottom: '1px solid #00ff9d',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '10px'
         }}>
-          <div style={{ color: '#00ff9d', fontSize: 14, fontWeight: 500 }}>
+          <div style={{ 
+            color: '#00ff9d', 
+            fontSize: isMobile ? '12px' : '14px', 
+            fontWeight: 500,
+            wordBreak: 'break-all'
+          }}>
             {'user@messenger:~$ '}
             <span style={{ color: '#ffffff', marginLeft: 8 }}>
               {user.email}
@@ -117,11 +137,12 @@ function App() {
               color: '#ff4444',
               border: '1px solid #ff4444',
               borderRadius: 0,
-              padding: '6px 16px',
-              fontSize: 12,
+              padding: isMobile ? '4px 12px' : '6px 16px',
+              fontSize: isMobile ? '10px' : '12px',
               fontFamily: 'JetBrains Mono, monospace',
               cursor: 'pointer',
-              transition: 'all 0.3s'
+              transition: 'all 0.3s',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = '#ff4444';
@@ -137,32 +158,79 @@ function App() {
         </div>
       </div>
       
-      {/* Main Content */}
-      <div style={{ display: 'flex', gap: 20 }}>
-        <div style={{ flex: 1 }}>
-          <Search 
-            onSelectUser={setSelectedUser} 
-            currentUserId={user.uid} 
-          />
-        </div>
-        
-        <div style={{ flex: 2 }}>
-          {selectedUser ? (
-            <Chat 
-              otherUser={selectedUser} 
-              currentUser={user}
-            />
-          ) : (
-            <div style={{
+      {/* Mobile Navigation */}
+      {isMobile && selectedUser && (
+        <div style={{ marginBottom: '10px' }}>
+          <button
+            onClick={() => setShowSearch(!showSearch)}
+            style={{
+              width: '100%',
+              padding: '10px',
+              background: '#1a1e2a',
+              color: '#00ff9d',
               border: '1px solid #00ff9d',
               borderRadius: 0,
-              padding: 40,
-              textAlign: 'center',
-              background: '#0a0e1a',
-              color: '#00ff9d'
-            }}>
-              <div style={{ fontSize: 14, whiteSpace: 'pre', fontFamily: 'JetBrains Mono, monospace' }}>
-                {`┌─────────────────────────────────────────┐
+              fontSize: '12px',
+              fontFamily: 'JetBrains Mono, monospace',
+              cursor: 'pointer'
+            }}
+          >
+            {showSearch ? '[ BACK TO CHAT ]' : '[ SHOW USERS ]'}
+          </button>
+        </div>
+      )}
+      
+      {/* Main Content */}
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? '10px' : '20px'
+      }}>
+        {(isMobile ? showSearch : true) && (
+          <div style={{ 
+            flex: 1,
+            width: isMobile ? '100%' : 'auto',
+            marginBottom: isMobile ? '10px' : '0'
+          }}>
+            <Search 
+              onSelectUser={(user) => {
+                setSelectedUser(user);
+                if (isMobile) setShowSearch(false);
+              }} 
+              currentUserId={user.uid}
+              isMobile={isMobile}
+            />
+          </div>
+        )}
+        
+        {(isMobile ? !showSearch : true) && (
+          <div style={{ 
+            flex: 2,
+            width: isMobile ? '100%' : 'auto'
+          }}>
+            {selectedUser ? (
+              <Chat 
+                otherUser={selectedUser} 
+                currentUser={user}
+                isMobile={isMobile}
+                onBack={() => setShowSearch(true)}
+              />
+            ) : (
+              <div style={{
+                border: '1px solid #00ff9d',
+                borderRadius: 0,
+                padding: isMobile ? '20px' : '40px',
+                textAlign: 'center',
+                background: '#0a0e1a',
+                color: '#00ff9d'
+              }}>
+                <div style={{ 
+                  fontSize: isMobile ? '10px' : '14px', 
+                  whiteSpace: 'pre', 
+                  fontFamily: 'JetBrains Mono, monospace',
+                  overflowX: 'auto'
+                }}>
+                  {`┌─────────────────────────────────────────┐
 │                                         │
 │    > SELECT A USER TO START CHATTING    │
 │                                         │
@@ -170,10 +238,11 @@ function App() {
 │    to find and select a user            │
 │                                         │
 └─────────────────────────────────────────┘`}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

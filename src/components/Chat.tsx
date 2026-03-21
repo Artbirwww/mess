@@ -4,9 +4,11 @@ import { sendMessage, listenMessages, Message, User } from '../firebase';
 interface ChatProps {
   otherUser: User;
   currentUser: User;
+  isMobile?: boolean;
+  onBack?: () => void;
 }
 
-export default function Chat({ otherUser, currentUser }: ChatProps) {
+export default function Chat({ otherUser, currentUser, isMobile = false, onBack }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -57,37 +59,60 @@ export default function Chat({ otherUser, currentUser }: ChatProps) {
       border: '1px solid #00ff9d',
       background: '#0a0e1a',
       borderRadius: 0,
-      height: '70vh',
+      height: isMobile ? 'calc(100vh - 180px)' : '70vh',
       display: 'flex', 
       flexDirection: 'column'
     }}>
       <div style={{ 
         background: '#1a1e2a',
-        padding: '12px 20px',
-        borderBottom: '1px solid #00ff9d'
+        padding: isMobile ? '10px 12px' : '12px 20px',
+        borderBottom: '1px solid #00ff9d',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
       }}>
-        <div style={{ color: '#00ff9d', fontSize: 14 }}>
-          {'> CHAT_WITH: '}{otherUser.name || otherUser.email}
+        <div style={{ flex: 1 }}>
+          <div style={{ color: '#00ff9d', fontSize: isMobile ? '12px' : '14px' }}>
+            {'> CHAT_WITH: '}{otherUser.name || otherUser.email}
+          </div>
+          <div style={{ fontSize: isMobile ? '9px' : '10px', color: '#888', marginTop: 4 }}>
+            {otherUser.email} {'| STATUS: ONLINE'}
+          </div>
         </div>
-        <div style={{ fontSize: 10, color: '#888', marginTop: 4, letterSpacing: 0.5 }}>
-          {otherUser.email} {'| STATUS: ONLINE'}
-        </div>
+        {isMobile && onBack && (
+          <button
+            onClick={onBack}
+            style={{
+              background: 'transparent',
+              color: '#00ff9d',
+              border: '1px solid #00ff9d',
+              borderRadius: 0,
+              padding: '4px 8px',
+              fontSize: '10px',
+              fontFamily: 'JetBrains Mono, monospace',
+              cursor: 'pointer'
+            }}
+          >
+            {'[ BACK ]'}
+          </button>
+        )}
       </div>
       
       <div style={{ 
         flex: 1, 
         overflowY: 'auto', 
-        padding: '20px',
+        padding: isMobile ? '12px' : '20px',
         background: '#0a0e1a'
       }}>
         {messages.length === 0 ? (
           <div style={{ 
             textAlign: 'center', 
             color: '#666', 
-            padding: '40px 20px',
-            fontSize: 12,
+            padding: isMobile ? '20px' : '40px 20px',
+            fontSize: isMobile ? '10px' : '12px',
             fontFamily: 'JetBrains Mono, monospace',
-            whiteSpace: 'pre'
+            whiteSpace: 'pre',
+            overflowX: 'auto'
           }}>
             {`┌─────────────────────────────────────┐
 │                                     │
@@ -107,19 +132,19 @@ export default function Chat({ otherUser, currentUser }: ChatProps) {
                 style={{ 
                   display: 'flex', 
                   justifyContent: isOwn ? 'flex-end' : 'flex-start',
-                  marginBottom: 20
+                  marginBottom: isMobile ? '12px' : '20px'
                 }}
               >
                 <div style={{ 
-                  maxWidth: '70%',
+                  maxWidth: isMobile ? '85%' : '70%',
                   background: isOwn ? '#1a3a2a' : '#1a1e2a',
                   border: `1px solid ${isOwn ? '#00ff9d' : '#2a2e3a'}`,
-                  padding: '12px 16px',
+                  padding: isMobile ? '8px 12px' : '12px 16px',
                   position: 'relative'
                 }}>
                   <div style={{ 
-                    fontSize: 12, 
-                    lineHeight: 1.5,
+                    fontSize: isMobile ? '11px' : '12px', 
+                    lineHeight: 1.4,
                     color: isOwn ? '#00ff9d' : '#cccccc',
                     whiteSpace: 'pre-wrap',
                     wordWrap: 'break-word'
@@ -127,38 +152,13 @@ export default function Chat({ otherUser, currentUser }: ChatProps) {
                     {msg.text}
                   </div>
                   <div style={{ 
-                    fontSize: 9, 
-                    marginTop: 8,
+                    fontSize: isMobile ? '8px' : '9px', 
+                    marginTop: 6,
                     color: '#666',
-                    textAlign: 'right',
-                    letterSpacing: 0.5
+                    textAlign: 'right'
                   }}>
                     {formatTime(msg.timestamp)}
                   </div>
-                  {isOwn && (
-                    <div style={{
-                      position: 'absolute',
-                      right: -8,
-                      top: 12,
-                      width: 0,
-                      height: 0,
-                      borderTop: '6px solid transparent',
-                      borderBottom: '6px solid transparent',
-                      borderLeft: `8px solid #1a3a2a`
-                    }} />
-                  )}
-                  {!isOwn && (
-                    <div style={{
-                      position: 'absolute',
-                      left: -8,
-                      top: 12,
-                      width: 0,
-                      height: 0,
-                      borderTop: '6px solid transparent',
-                      borderBottom: '6px solid transparent',
-                      borderRight: `8px solid #1a1e2a`
-                    }} />
-                  )}
                 </div>
               </div>
             );
@@ -168,11 +168,11 @@ export default function Chat({ otherUser, currentUser }: ChatProps) {
       </div>
       
       <div style={{ 
-        padding: '15px 20px', 
+        padding: isMobile ? '10px 12px' : '15px 20px', 
         borderTop: '1px solid #2a2e3a',
         background: '#0a0e1a',
         display: 'flex',
-        gap: 10
+        gap: isMobile ? '8px' : '10px'
       }}>
         <div style={{ flex: 1, position: 'relative' }}>
           <span style={{
@@ -181,7 +181,7 @@ export default function Chat({ otherUser, currentUser }: ChatProps) {
             top: '50%',
             transform: 'translateY(-50%)',
             color: '#00ff9d',
-            fontSize: 12,
+            fontSize: isMobile ? '10px' : '12px',
             opacity: 0.5
           }}>
             {'>'}
@@ -196,11 +196,11 @@ export default function Chat({ otherUser, currentUser }: ChatProps) {
             disabled={sending}
             style={{ 
               width: '100%', 
-              padding: '12px 12px 12px 28px',
+              padding: isMobile ? '10px 10px 10px 28px' : '12px 12px 12px 28px',
               background: '#0a0e1a',
               border: '1px solid #00ff9d',
               borderRadius: 0,
-              fontSize: 13,
+              fontSize: isMobile ? '11px' : '13px',
               fontFamily: 'JetBrains Mono, monospace',
               color: '#00ff9d'
             }}
@@ -210,16 +210,16 @@ export default function Chat({ otherUser, currentUser }: ChatProps) {
           onClick={handleSend}
           disabled={sending || !text.trim()}
           style={{
-            padding: '12px 32px',
+            padding: isMobile ? '10px 16px' : '12px 32px',
             background: sending || !text.trim() ? '#2a2e3a' : '#00ff9d',
             color: sending || !text.trim() ? '#666' : '#0a0e1a',
             border: 'none',
             borderRadius: 0,
-            fontSize: 12,
+            fontSize: isMobile ? '10px' : '12px',
             fontFamily: 'JetBrains Mono, monospace',
             cursor: (sending || !text.trim()) ? 'not-allowed' : 'pointer',
             fontWeight: 'bold',
-            transition: 'all 0.3s'
+            whiteSpace: 'nowrap'
           }}
         >
           {sending ? '[ SENDING ]' : '[ SEND ]'}
