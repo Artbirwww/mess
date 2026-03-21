@@ -32,12 +32,12 @@ export default function Search({ onSelectUser, currentUserId, isMobile = false }
   return (
     <div style={{ 
       border: '1px solid #00ff9d',
-      background: '#0a0e1a',
+      background: '#000000',
       borderRadius: 0,
       overflow: 'hidden'
     }}>
       <div style={{ 
-        background: '#1a1e2a',
+        background: '#000000',
         padding: isMobile ? '8px 12px' : '12px 20px',
         borderBottom: '1px solid #00ff9d'
       }}>
@@ -67,7 +67,7 @@ export default function Search({ onSelectUser, currentUserId, isMobile = false }
               style={{ 
                 flex: 1, 
                 padding: isMobile ? '8px 10px' : '10px 12px',
-                background: '#0a0e1a',
+                background: '#000000',
                 border: '1px solid #00ff9d',
                 borderRadius: 0,
                 fontSize: isMobile ? '12px' : '14px',
@@ -81,7 +81,7 @@ export default function Search({ onSelectUser, currentUserId, isMobile = false }
               style={{
                 padding: isMobile ? '8px 16px' : '10px 24px',
                 background: '#00ff9d',
-                color: '#0a0e1a',
+                color: '#000000',
                 border: 'none',
                 borderRadius: 0,
                 fontSize: isMobile ? '10px' : '12px',
@@ -139,7 +139,7 @@ export default function Search({ onSelectUser, currentUserId, isMobile = false }
                       padding: isMobile ? '10px 12px' : '12px 16px',
                       border: '1px solid #2a2e3a',
                       transition: 'all 0.3s',
-                      background: '#0a0e1a'
+                      background: '#000000'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = '#1a1e2a';
@@ -147,7 +147,7 @@ export default function Search({ onSelectUser, currentUserId, isMobile = false }
                       e.currentTarget.style.transform = isMobile ? 'none' : 'translateX(5px)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#0a0e1a';
+                      e.currentTarget.style.background = '#000000';
                       e.currentTarget.style.borderColor = '#2a2e3a';
                       e.currentTarget.style.transform = 'translateX(0)';
                     }}

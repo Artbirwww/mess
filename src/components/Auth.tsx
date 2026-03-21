@@ -76,7 +76,7 @@ export default function Auth({ onAuth }: AuthProps) {
     }}>
       <div style={{ 
         border: '1px solid #00ff9d',
-        background: '#0a0e1a',
+        background: '#000000',
         borderRadius: 0,
         overflow: 'hidden'
       }}>
@@ -113,7 +113,7 @@ export default function Auth({ onAuth }: AuthProps) {
                 style={{ 
                   width: '100%', 
                   padding: isMobile ? '8px 10px' : '10px 12px',
-                  background: '#0a0e1a',
+                  background: '#000000',
                   border: '1px solid #00ff9d',
                   borderRadius: 0,
                   fontSize: isMobile ? '12px' : '14px',
@@ -143,7 +143,7 @@ export default function Auth({ onAuth }: AuthProps) {
                 style={{ 
                   width: '100%', 
                   padding: isMobile ? '8px 10px' : '10px 12px',
-                  background: '#0a0e1a',
+                  background: '#000000',
                   border: '1px solid #00ff9d',
                   borderRadius: 0,
                   fontSize: isMobile ? '12px' : '14px',
@@ -175,7 +175,7 @@ export default function Auth({ onAuth }: AuthProps) {
                 width: '100%', 
                 padding: isMobile ? '10px' : '12px',
                 background: '#00ff9d',
-                color: '#0a0e1a',
+                color: '#000000',
                 border: 'none',
                 borderRadius: 0,
                 fontSize: isMobile ? '12px' : '14px',

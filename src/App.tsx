@@ -1,14 +1,10 @@
 import { useState, useEffect } from 'react';
-import { auth, checkUserExists, createUserProfile, getAllUsers } from './firebase';
+import { auth, checkUserExists, createUserProfile, getAllUsers, User } from './firebase';
 import Auth from './components/Auth';
 import Search from './components/Search';
 import Chat from './components/Chat';
-
-interface User {
-  uid: string;
-  email: string;
-  displayName?: string;
-}
+import ActiveChatsList from './components/ActiveChatsList';
+import Notifications from './components/Notifications';
 
 interface SelectedUser {
   uid: string;
@@ -22,6 +18,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showSearch, setShowSearch] = useState(true);
+  const [showChatsList, setShowChatsList] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -62,6 +59,26 @@ function App() {
     setShowSearch(true);
   };
 
+  const handleSelectUser = (selectedUser: SelectedUser) => {
+    setSelectedUser(selectedUser);
+    if (isMobile) {
+      setShowSearch(false);
+      setShowChatsList(false);
+    }
+  };
+
+  const handleNotificationClick = async (selectedUser: User) => {
+    setSelectedUser({
+      uid: selectedUser.uid,
+      email: selectedUser.email,
+      name: selectedUser.name
+    });
+    if (isMobile) {
+      setShowSearch(false);
+      setShowChatsList(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       console.log(`[SYSTEM] User logged in: ${user.email}`);
@@ -95,22 +112,22 @@ function App() {
   }
 
   return (
-    <div style={{ 
-      maxWidth: 1400, 
-      margin: '0 auto', 
+    <div style={{
+      maxWidth: 1400,
+      margin: '0 auto',
       padding: isMobile ? '10px' : '20px',
       fontFamily: 'JetBrains Mono, monospace'
     }}>
       {/* Terminal Header */}
-      <div style={{ 
-        background: '#0a0e1a',
+      <div style={{
+        background: '#000000',
         border: '1px solid #00ff9d',
         borderRadius: 0,
         marginBottom: isMobile ? '10px' : '20px',
         overflow: 'hidden'
       }}>
-        <div style={{ 
-          background: '#1a1e2a',
+        <div style={{
+          background: '#000000',
           padding: isMobile ? '8px 12px' : '12px 20px',
           borderBottom: '1px solid #00ff9d',
           display: 'flex',
@@ -119,9 +136,9 @@ function App() {
           flexWrap: 'wrap',
           gap: '10px'
         }}>
-          <div style={{ 
-            color: '#00ff9d', 
-            fontSize: isMobile ? '12px' : '14px', 
+          <div style={{
+            color: '#00ff9d',
+            fontSize: isMobile ? '12px' : '14px',
             fontWeight: 500,
             wordBreak: 'break-all'
           }}>
@@ -130,87 +147,147 @@ function App() {
               {user.email}
             </span>
           </div>
-          <button 
-            onClick={handleLogout}
-            style={{
-              background: 'transparent',
-              color: '#ff4444',
-              border: '1px solid #ff4444',
-              borderRadius: 0,
-              padding: isMobile ? '4px 12px' : '6px 16px',
-              fontSize: isMobile ? '10px' : '12px',
-              fontFamily: 'JetBrains Mono, monospace',
-              cursor: 'pointer',
-              transition: 'all 0.3s',
-              whiteSpace: 'nowrap'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#ff4444';
-              e.currentTarget.style.color = '#0a0e1a';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = '#ff4444';
-            }}
-          >
-            {'[LOGOUT]'}
-          </button>
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center'
+          }}>
+            {/* Mobile: Toggle Chats List Button */}
+            {isMobile && (
+              <button
+                onClick={() => {
+                  setShowChatsList(!showChatsList);
+                  setShowSearch(false);
+                }}
+                style={{
+                  background: showChatsList ? '#00ff9d' : 'transparent',
+                  color: showChatsList ? '#000000' : '#00ff9d',
+                  border: '1px solid #00ff9d',
+                  borderRadius: 0,
+                  padding: '4px 12px',
+                  fontSize: '10px',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  cursor: 'pointer'
+                }}
+              >
+                {'[ CHATS ]'}
+              </button>
+            )}
+            <button
+              onClick={handleLogout}
+              style={{
+                background: 'transparent',
+                color: '#ff4444',
+                border: '1px solid #ff4444',
+                borderRadius: 0,
+                padding: isMobile ? '4px 12px' : '6px 16px',
+                fontSize: isMobile ? '10px' : '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#ff4444';
+                e.currentTarget.style.color = '#000000';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#ff4444';
+              }}
+            >
+              {'[LOGOUT]'}
+            </button>
+          </div>
         </div>
       </div>
-      
+
       {/* Mobile Navigation */}
       {isMobile && selectedUser && (
-        <div style={{ marginBottom: '10px' }}>
-          <button
-            onClick={() => setShowSearch(!showSearch)}
-            style={{
-              width: '100%',
-              padding: '10px',
-              background: '#1a1e2a',
-              color: '#00ff9d',
-              border: '1px solid #00ff9d',
-              borderRadius: 0,
-              fontSize: '12px',
-              fontFamily: 'JetBrains Mono, monospace',
-              cursor: 'pointer'
-            }}
-          >
-            {showSearch ? '[ BACK TO CHAT ]' : '[ SHOW USERS ]'}
-          </button>
+        <div style={{ marginBottom: '10px', display: 'flex', gap: '8px' }}>
+          {!showChatsList && (
+            <button
+              onClick={() => setShowSearch(!showSearch)}
+              style={{
+                flex: 1,
+                padding: '10px',
+                background: '#000000',
+                color: '#00ff9d',
+                border: '1px solid #00ff9d',
+                borderRadius: 0,
+                fontSize: '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                cursor: 'pointer'
+              }}
+            >
+              {showSearch ? '[ BACK TO CHAT ]' : '[ SHOW USERS ]'}
+            </button>
+          )}
+          {showChatsList && (
+            <button
+              onClick={() => setShowChatsList(false)}
+              style={{
+                flex: 1,
+                padding: '10px',
+                background: '#000000',
+                color: '#00ff9d',
+                border: '1px solid #00ff9d',
+                borderRadius: 0,
+                fontSize: '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                cursor: 'pointer'
+              }}
+            >
+              {'[ BACK TO CHAT ]'}
+            </button>
+          )}
         </div>
       )}
-      
+
       {/* Main Content */}
-      <div style={{ 
-        display: 'flex', 
+      <div style={{
+        display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
         gap: isMobile ? '10px' : '20px'
       }}>
-        {(isMobile ? showSearch : true) && (
-          <div style={{ 
+        {/* Left Panel - Search or Chats List on Mobile */}
+        {(isMobile ? showSearch : true) && !showChatsList && (
+          <div style={{
             flex: 1,
             width: isMobile ? '100%' : 'auto',
             marginBottom: isMobile ? '10px' : '0'
           }}>
-            <Search 
-              onSelectUser={(user) => {
-                setSelectedUser(user);
-                if (isMobile) setShowSearch(false);
-              }} 
+            <Search
+              onSelectUser={handleSelectUser}
               currentUserId={user.uid}
               isMobile={isMobile}
             />
           </div>
         )}
-        
-        {(isMobile ? !showSearch : true) && (
-          <div style={{ 
+
+        {/* Chats List - Always visible on desktop, toggle on mobile */}
+        {(!isMobile || (isMobile && showChatsList)) && (
+          <div style={{
+            width: isMobile ? '100%' : 300,
+            flexShrink: 0
+          }}>
+            <ActiveChatsList
+              currentUserId={user.uid}
+              onSelectChat={handleSelectUser}
+              isMobile={isMobile}
+            />
+          </div>
+        )}
+
+        {/* Chat Panel */}
+        {(isMobile ? !showSearch && !showChatsList : true) && (
+          <div style={{
             flex: 2,
             width: isMobile ? '100%' : 'auto'
           }}>
             {selectedUser ? (
-              <Chat 
-                otherUser={selectedUser} 
+              <Chat
+                otherUser={selectedUser}
                 currentUser={user}
                 isMobile={isMobile}
                 onBack={() => setShowSearch(true)}
@@ -221,12 +298,12 @@ function App() {
                 borderRadius: 0,
                 padding: isMobile ? '20px' : '40px',
                 textAlign: 'center',
-                background: '#0a0e1a',
+                background: '#000000',
                 color: '#00ff9d'
               }}>
-                <div style={{ 
-                  fontSize: isMobile ? '10px' : '14px', 
-                  whiteSpace: 'pre', 
+                <div style={{
+                  fontSize: isMobile ? '10px' : '14px',
+                  whiteSpace: 'pre',
                   fontFamily: 'JetBrains Mono, monospace',
                   overflowX: 'auto'
                 }}>
@@ -234,8 +311,8 @@ function App() {
 │                                         │
 │    > SELECT A USER TO START CHATTING    │
 │                                         │
-│    Use the search panel on the left     │
-│    to find and select a user            │
+│    Use the search panel or active       │
+│    chats list to select a user          │
 │                                         │
 └─────────────────────────────────────────┘`}
                 </div>
@@ -244,6 +321,13 @@ function App() {
           </div>
         )}
       </div>
+
+      {/* Notifications Component */}
+      <Notifications
+        currentUserId={user.uid}
+        isMobile={isMobile}
+        onNotificationClick={handleNotificationClick}
+      />
     </div>
   );
 }
