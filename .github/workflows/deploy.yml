@@ -3,11 +3,11 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main  # Автоматически при пуше в ветку main
-  workflow_dispatch:  # Позволяет запускать вручную из интерфейса GitHub
+      - main
+  workflow_dispatch:
 
 permissions:
-  contents: write  # Нужно для публикации на gh-pages
+  contents: write
 
 jobs:
   build-and-deploy:
@@ -23,11 +23,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'npm'
       
-      # 3. Устанавливаем зависимости
+      # 3. Устанавливаем зависимости (без проверки lockfile)
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-package-lock
       
       # 4. Собираем проект
       - name: Build project
@@ -47,8 +46,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           publish_branch: gh-pages
-          force_orphan: true  # Очищает старую ветку при каждом деплое
-      
-      # 6. Уведомление о успешном деплое
-      - name: Success message
-        run: echo "✅ Deployed successfully to GitHub Pages!"
+          force_orphan: true
