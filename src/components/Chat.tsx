@@ -7,7 +7,9 @@ import {
   updateChatInStorage,
   incrementUnreadInStorage,
   uploadImage,
-  sendImageMessage
+  sendImageMessage,
+  deleteMessage,
+  editMessage
 } from '../firebase';
 import './Chat.css';
 
@@ -18,16 +20,45 @@ interface ChatProps {
   onBack?: () => void;
 }
 
+interface ContextMenuState {
+  visible: boolean;
+  x: number;
+  y: number;
+  messageId: string;
+  messageText: string;
+  chatId: string;
+}
+
+interface EditModalState {
+  visible: boolean;
+  messageId: string;
+  messageText: string;
+  chatId: string;
+}
+
+interface ReplyState {
+  messageId: string;
+  text: string;
+  fromId: string;
+  fromName?: string;
+}
+
 export default function Chat({ otherUser, currentUser, isMobile = false, onBack }: ChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [editModal, setEditModal] = useState<EditModalState | null>(null);
+  const [replyTo, setReplyTo] = useState<ReplyState | null>(null);
+  const [editText, setEditText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const prevMessageCountRef = useRef<number>(0);
+  const chatId = [currentUser.uid, otherUser.uid].sort().join('_');
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!currentUser || !otherUser) return;
@@ -61,20 +92,137 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Закрытие контекстного меню при клике
+  useEffect(() => {
+    const handleClick = () => {
+      if (contextMenu) {
+        setContextMenu(null);
+      }
+    };
+
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [contextMenu]);
+
+  const handleContextMenu = (e: React.MouseEvent, message: Message) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      visible: true,
+      x: e.clientX,
+      y: e.clientY,
+      messageId: message.id || '',
+      messageText: message.text || '',
+      chatId
+    });
+  };
+
+  const handleCopyMessage = async () => {
+    if (contextMenu?.messageText) {
+      try {
+        await navigator.clipboard.writeText(contextMenu.messageText);
+      } catch (error) {
+        console.error('Failed to copy:', error);
+      }
+      setContextMenu(null);
+    }
+  };
+
+  const handleDeleteMessage = async () => {
+    if (contextMenu?.messageId && contextMenu.chatId) {
+      try {
+        await deleteMessage(contextMenu.chatId, contextMenu.messageId);
+      } catch (error) {
+        console.error('Failed to delete:', error);
+      }
+      setContextMenu(null);
+    }
+  };
+
+  const handleEditMessage = () => {
+    if (contextMenu?.messageId) {
+      setEditModal({
+        visible: true,
+        messageId: contextMenu.messageId,
+        messageText: contextMenu.messageText,
+        chatId: contextMenu.chatId
+      });
+      setEditText(contextMenu.messageText);
+      setContextMenu(null);
+      // Фокус на инпут после открытия модального окна
+      setTimeout(() => editInputRef.current?.focus(), 100);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (editModal?.messageId && editModal.chatId && editText.trim()) {
+      try {
+        await editMessage(editModal.chatId, editModal.messageId, editText.trim());
+        setEditModal(null);
+        setEditText('');
+      } catch (error) {
+        console.error('Failed to edit:', error);
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditModal(null);
+    setEditText('');
+  };
+
+  const handleEditKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
+
+  const handleReplyMessage = () => {
+    if (contextMenu) {
+      const otherUserName = otherUser.name || otherUser.email;
+      setReplyTo({
+        messageId: contextMenu.messageId,
+        text: contextMenu.messageText,
+        fromId: contextMenu.messageId ? messages.find(m => m.id === contextMenu.messageId)?.fromId || '' : '',
+        fromName: otherUserName
+      });
+      setContextMenu(null);
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleCancelReply = () => {
+    setReplyTo(null);
+  };
+
   const handleSend = async () => {
     if (!text.trim() || sending) return;
 
+    const messageText = text;
+    setText('');
+    setReplyTo(null);
+
     setSending(true);
     try {
+      const replyData = replyTo ? {
+        messageId: replyTo.messageId,
+        text: replyTo.text,
+        fromId: replyTo.fromId,
+        fromName: replyTo.fromName
+      } : undefined;
+
       await sendMessage(
         currentUser.uid,
         otherUser.uid,
-        text
+        messageText,
+        replyData
       );
-      setText('');
-      inputRef.current?.focus();
     } catch (error) {
       console.error('Error sending message:', error);
+      setText(messageText);
     } finally {
       setSending(false);
     }
@@ -160,12 +308,26 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
         ) : (
           messages.map((msg: Message, index: number) => {
             const isOwn = msg.fromId === currentUser.uid;
+            const replyFromName = msg.replyTo?.fromId === currentUser.uid 
+              ? currentUser.email 
+              : (msg.replyTo?.fromName || otherUser.email);
             return (
               <div
                 key={msg.id || index}
                 className={`chat-message ${isOwn ? 'own' : ''}`}
+                onContextMenu={(e) => handleContextMenu(e, msg)}
               >
                 <div className="chat-message-bubble">
+                  {msg.replyTo && msg.replyTo.text && (
+                    <div className="chat-message-reply">
+                      <span className="chat-message-reply-from">
+                        {`> RE: ${replyFromName}`}
+                      </span>
+                      <span className="chat-message-reply-text">
+                        {msg.replyTo.text.substring(0, 100)}{msg.replyTo.text.length > 100 ? '...' : ''}
+                      </span>
+                    </div>
+                  )}
                   {msg.imageUrl && (
                     <div className="chat-message-image">
                       <img
@@ -178,6 +340,9 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
                   {msg.text && (
                     <div className="chat-message-text">
                       {msg.text}
+                      {msg.editedAt && (
+                        <span className="chat-message-edited">{' (edited)'}</span>
+                      )}
                     </div>
                   )}
                   <div className="chat-message-time">
@@ -208,6 +373,16 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
           {uploading ? '[ ... ]' : '[ IMG ]'}
         </button>
         <div className="chat-input-wrapper">
+          {replyTo && (
+            <div className="chat-reply-preview">
+              <span className="chat-reply-preview-text">
+                {'> RE: '}{replyTo.text.substring(0, 50)}{replyTo.text.length > 50 ? '...' : ''}
+              </span>
+              <button onClick={handleCancelReply} className="chat-reply-cancel">
+                {'×'}
+              </button>
+            </div>
+          )}
           <span className="chat-input-prefix">{'>'}</span>
           <input
             ref={inputRef}
@@ -216,7 +391,7 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
             onChange={(e) => setText(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="type your message..."
-            disabled={sending}
+            autoFocus
             className="chat-input input-terminal"
           />
         </div>
@@ -237,6 +412,67 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
               {'[ CLOSE ]'}
             </button>
             <img src={selectedImage} alt="Full size" />
+          </div>
+        </div>
+      )}
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          className="chat-context-menu"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <button onClick={handleCopyMessage} className="chat-context-menu-item">
+            {'[ COPY ]'}
+          </button>
+          <button onClick={handleReplyMessage} className="chat-context-menu-item">
+            {'[ REPLY ]'}
+          </button>
+          <button onClick={handleEditMessage} className="chat-context-menu-item">
+            {'[ EDIT ]'}
+          </button>
+          <button onClick={handleDeleteMessage} className="chat-context-menu-item chat-context-menu-danger">
+            {'[ DELETE ]'}
+          </button>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editModal && (
+        <div className="edit-modal" onClick={handleCancelEdit}>
+          <div className="edit-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="edit-modal-header">
+              <span>{'> EDIT_MESSAGE:'}</span>
+              <button onClick={handleCancelEdit} className="edit-modal-close">
+                {'[ CLOSE ]'}
+              </button>
+            </div>
+            <div className="edit-modal-body">
+              <div className="edit-input-wrapper">
+                <span className="edit-input-prefix">{'>'}</span>
+                <input
+                  ref={editInputRef}
+                  type="text"
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onKeyPress={handleEditKeyPress}
+                  placeholder="edit your message..."
+                  className="edit-input input-terminal"
+                />
+              </div>
+            </div>
+            <div className="edit-modal-footer">
+              <button onClick={handleCancelEdit} className="btn-terminal">
+                {'[ CANCEL ]'}
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={!editText.trim()}
+                className="btn-terminal btn-terminal-primary"
+              >
+                {'[ SAVE ]'}
+              </button>
+            </div>
           </div>
         </div>
       )}

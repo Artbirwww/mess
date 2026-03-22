@@ -11,7 +11,9 @@ import {
   onSnapshot,
   doc,
   setDoc,
-  getDoc
+  getDoc,
+  deleteDoc,
+  updateDoc
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -47,6 +49,13 @@ export interface Message {
   toId: string;
   timestamp: number;
   imageUrl?: string;
+  editedAt?: number;
+  replyTo?: {
+    messageId: string;
+    text: string;
+    fromId: string;
+    fromName?: string;
+  };
 }
 
 // Создание профиля
@@ -92,17 +101,29 @@ export const getAllUsers = async (): Promise<User[]> => {
 export const sendMessage = async (
   fromId: string,
   toId: string,
-  text: string
+  text: string,
+  replyTo?: {
+    messageId: string;
+    text: string;
+    fromId: string;
+    fromName?: string;
+  }
 ) => {
   try {
     const chatId = [fromId, toId].sort().join('_');
-    await addDoc(collection(db, 'chats', chatId, 'messages'), {
+    const messageData: any = {
       text,
       fromId,
       toId,
-      timestamp: Date.now(),
-    });
+      timestamp: Date.now()
+    };
     
+    if (replyTo) {
+      messageData.replyTo = replyTo;
+    }
+    
+    await addDoc(collection(db, 'chats', chatId, 'messages'), messageData);
+
     // Обновляем localStorage для отправителя
     const toUser = await getUserById(toId);
     updateChatInStorage(
@@ -113,7 +134,7 @@ export const sendMessage = async (
       text,
       true
     );
-    
+
     // Обновляем localStorage для получателя (увеличиваем счётчик непрочитанных)
     const fromUser = await getUserById(fromId);
     updateChatInStorage(
@@ -569,5 +590,37 @@ export const sendImageMessage = async (
     );
   } catch (error) {
     console.error('Send image error:', error);
+  }
+};
+
+// Удалить сообщение
+export const deleteMessage = async (
+  chatId: string,
+  messageId: string
+) => {
+  try {
+    const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
+    await deleteDoc(messageRef);
+  } catch (error) {
+    console.error('Delete message error:', error);
+    throw error;
+  }
+};
+
+// Редактировать сообщение
+export const editMessage = async (
+  chatId: string,
+  messageId: string,
+  newText: string
+) => {
+  try {
+    const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
+    await updateDoc(messageRef, {
+      text: newText,
+      editedAt: Date.now()
+    });
+  } catch (error) {
+    console.error('Edit message error:', error);
+    throw error;
   }
 };
