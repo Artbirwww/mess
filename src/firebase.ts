@@ -20,14 +20,13 @@ import {
   getDownloadURL
 } from 'firebase/storage';
 
-// ВАШИ ПРЯМЫЕ КЛЮЧИ ИЗ FIREBASE
 const firebaseConfig = {
-  apiKey: "AIzaSyAaArHzBj0VKSzg4FLiSZi-BErj8vQj2_A",
-  authDomain: "mess-50bb2.firebaseapp.com",
-  projectId: "mess-50bb2",
-  storageBucket: "mess-50bb2.firebasestorage.app",
-  messagingSenderId: "1014513579106",
-  appId: "1:1014513579106:web:e162f3af943ecdc9824d3b"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 console.log('✅ Firebase Config:', {
@@ -100,9 +99,7 @@ export const getAllUsers = async (): Promise<User[]> => {
 export const sendMessage = async (
   fromId: string,
   toId: string,
-  text: string,
-  fromEmail?: string,
-  fromName?: string
+  text: string
 ) => {
   try {
     const chatId = [fromId, toId].sort().join('_');
@@ -550,9 +547,7 @@ export const uploadImage = async (
 export const sendImageMessage = async (
   fromId: string,
   toId: string,
-  imageUrl: string,
-  fromEmail?: string,
-  fromName?: string
+  imageUrl: string
 ) => {
   try {
     const chatId = [fromId, toId].sort().join('_');
