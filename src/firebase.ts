@@ -607,6 +607,23 @@ export const deleteMessage = async (
   }
 };
 
+// Удалить несколько сообщений
+export const deleteMessages = async (
+  chatId: string,
+  messageIds: string[]
+) => {
+  try {
+    const deletePromises = messageIds.map(messageId => {
+      const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
+      return deleteDoc(messageRef);
+    });
+    await Promise.all(deletePromises);
+  } catch (error) {
+    console.error('Delete messages error:', error);
+    throw error;
+  }
+};
+
 // Редактировать сообщение
 export const editMessage = async (
   chatId: string,

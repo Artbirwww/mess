@@ -9,7 +9,8 @@ import {
   uploadImage,
   sendImageMessage,
   deleteMessage,
-  editMessage
+  editMessage,
+  deleteMessages
 } from '../firebase';
 import './Chat.css';
 
@@ -53,6 +54,8 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
   const [editModal, setEditModal] = useState<EditModalState | null>(null);
   const [replyTo, setReplyTo] = useState<ReplyState | null>(null);
   const [editText, setEditText] = useState('');
+  const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
+  const [selectionMode, setSelectionMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -180,6 +183,45 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
     }
   };
 
+  const toggleSelectionMode = () => {
+    setSelectionMode(!selectionMode);
+    setSelectedMessages(new Set());
+  };
+
+  const toggleMessageSelection = (messageId: string) => {
+    setSelectedMessages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllMessages = () => {
+    const allIds = messages.map(m => m.id).filter((id): id is string => !!id);
+    setSelectedMessages(new Set(allIds));
+  };
+
+  const clearSelection = () => {
+    setSelectedMessages(new Set());
+    setSelectionMode(false);
+  };
+
+  const handleDeleteSelectedMessages = async () => {
+    if (selectedMessages.size === 0) return;
+    
+    try {
+      await deleteMessages(chatId, Array.from(selectedMessages));
+      setSelectedMessages(new Set());
+      setSelectionMode(false);
+    } catch (error) {
+      console.error('Failed to delete selected messages:', error);
+    }
+  };
+
   const handleReplyMessage = () => {
     if (contextMenu) {
       const otherUserName = otherUser.name || otherUser.email;
@@ -281,6 +323,42 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
             {otherUser.email} {' | STATUS: ONLINE'}
           </div>
         </div>
+        <div className="chat-header-actions">
+          {selectionMode ? (
+            <>
+              <span className="chat-selection-info">
+                {`> SELECTED: ${selectedMessages.size}/${messages.length}`}
+              </span>
+              <button
+                onClick={selectAllMessages}
+                className="btn-terminal"
+              >
+                {'[ SELECT ALL ]'}
+              </button>
+              <button
+                onClick={handleDeleteSelectedMessages}
+                disabled={selectedMessages.size === 0}
+                className="btn-terminal btn-terminal-danger"
+              >
+                {'[ DELETE ]'}
+              </button>
+              <button
+                onClick={clearSelection}
+                className="btn-terminal"
+              >
+                {'[ CANCEL ]'}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={toggleSelectionMode}
+              className="btn-terminal"
+              title="Select multiple messages"
+            >
+              {'[ SELECT ]'}
+            </button>
+          )}
+        </div>
         {isMobile && onBack && (
           <button
             onClick={onBack}
@@ -306,54 +384,67 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
             </pre>
           </div>
         ) : (
-          messages.map((msg: Message, index: number) => {
-            const isOwn = msg.fromId === currentUser.uid;
-            const replyFromName = msg.replyTo?.fromId === currentUser.uid 
-              ? currentUser.email 
-              : (msg.replyTo?.fromName || otherUser.email);
-            return (
-              <div
-                key={msg.id || index}
-                className={`chat-message ${isOwn ? 'own' : ''}`}
-                onContextMenu={(e) => handleContextMenu(e, msg)}
-              >
-                <div className="chat-message-bubble">
-                  {msg.replyTo && msg.replyTo.text && (
-                    <div className="chat-message-reply">
-                      <span className="chat-message-reply-from">
-                        {`> RE: ${replyFromName}`}
-                      </span>
-                      <span className="chat-message-reply-text">
-                        {msg.replyTo.text.substring(0, 100)}{msg.replyTo.text.length > 100 ? '...' : ''}
-                      </span>
-                    </div>
+          <>
+            {messages.map((msg: Message, index: number) => {
+              const isOwn = msg.fromId === currentUser.uid;
+              const isSelected = selectedMessages.has(msg.id || '');
+              const replyFromName = msg.replyTo?.fromId === currentUser.uid
+                ? currentUser.email
+                : (msg.replyTo?.fromName || otherUser.email);
+              return (
+                <div
+                  key={msg.id || index}
+                  className={`chat-message ${isOwn ? 'own' : ''} ${isSelected ? 'selected' : ''}`}
+                  onContextMenu={(e) => !selectionMode && handleContextMenu(e, msg)}
+                  onClick={() => selectionMode && msg.id && toggleMessageSelection(msg.id)}
+                >
+                  {selectionMode && (
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => msg.id && toggleMessageSelection(msg.id)}
+                      className="chat-message-checkbox"
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   )}
-                  {msg.imageUrl && (
-                    <div className="chat-message-image">
-                      <img
-                        src={msg.imageUrl}
-                        alt="Shared image"
-                        onClick={() => handleImageClick(msg.imageUrl!)}
-                      />
+                  <div className="chat-message-bubble">
+                    {msg.replyTo && msg.replyTo.text && (
+                      <div className="chat-message-reply">
+                        <span className="chat-message-reply-from">
+                          {`> RE: ${replyFromName}`}
+                        </span>
+                        <span className="chat-message-reply-text">
+                          {msg.replyTo.text.substring(0, 100)}{msg.replyTo.text.length > 100 ? '...' : ''}
+                        </span>
+                      </div>
+                    )}
+                    {msg.imageUrl && (
+                      <div className="chat-message-image">
+                        <img
+                          src={msg.imageUrl}
+                          alt="Shared image"
+                          onClick={() => handleImageClick(msg.imageUrl!)}
+                        />
+                      </div>
+                    )}
+                    {msg.text && (
+                      <div className="chat-message-text">
+                        {msg.text}
+                        {msg.editedAt && (
+                          <span className="chat-message-edited">{' (edited)'}</span>
+                        )}
+                      </div>
+                    )}
+                    <div className="chat-message-time">
+                      {formatTime(msg.timestamp)}
                     </div>
-                  )}
-                  {msg.text && (
-                    <div className="chat-message-text">
-                      {msg.text}
-                      {msg.editedAt && (
-                        <span className="chat-message-edited">{' (edited)'}</span>
-                      )}
-                    </div>
-                  )}
-                  <div className="chat-message-time">
-                    {formatTime(msg.timestamp)}
                   </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <div className="chat-input-area">
