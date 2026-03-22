@@ -5,6 +5,7 @@ import Search from './components/Search';
 import Chat from './components/Chat';
 import ActiveChatsList from './components/ActiveChatsList';
 import Notifications from './components/Notifications';
+import './App.css';
 
 interface SelectedUser {
   uid: string;
@@ -12,17 +13,20 @@ interface SelectedUser {
   name?: string;
 }
 
+// Breakpoints
+const MOBILE_BREAKPOINT = 768;
+
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= MOBILE_BREAKPOINT);
   const [showSearch, setShowSearch] = useState(true);
   const [showChatsList, setShowChatsList] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
+      setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -37,10 +41,9 @@ function App() {
           displayName: firebaseUser.displayName || undefined
         };
         setUser(userData);
-        
+
         const exists = await checkUserExists(firebaseUser.uid);
         if (!exists) {
-          console.log('[SYSTEM] Creating user profile...');
           const displayName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User';
           await createUserProfile(firebaseUser.uid, firebaseUser.email || '', displayName);
         }
@@ -81,7 +84,6 @@ function App() {
 
   useEffect(() => {
     if (user) {
-      console.log(`[SYSTEM] User logged in: ${user.email}`);
       getAllUsers().then(users => {
         console.log(`[SYSTEM] Total users in database: ${users.length}`);
       });
@@ -90,16 +92,8 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        fontFamily: 'JetBrains Mono, monospace',
-        padding: '20px',
-        textAlign: 'center'
-      }}>
-        <div style={{ color: '#00ff9d', fontSize: isMobile ? '14px' : '16px' }}>
+      <div className="loading-screen">
+        <div className="loading-text">
           {'> LOADING SYSTEM...'}
           <span className="cursor-blink">_</span>
         </div>
@@ -111,114 +105,47 @@ function App() {
     return <Auth onAuth={() => setUser(auth.currentUser as User)} />;
   }
 
+  const showLeftPanel = isMobile ? showSearch : true;
+  const showChatPanel = isMobile ? (!showSearch && !showChatsList) : true;
+
   return (
-    <div style={{
-      maxWidth: 1400,
-      margin: '0 auto',
-      padding: isMobile ? '10px' : '20px',
-      fontFamily: 'JetBrains Mono, monospace'
-    }}>
+    <div className="messenger-container">
       {/* Terminal Header */}
-      <div style={{
-        background: '#000000',
-        border: '1px solid #00ff9d',
-        borderRadius: 0,
-        marginBottom: isMobile ? '10px' : '20px',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          background: '#000000',
-          padding: isMobile ? '8px 12px' : '12px 20px',
-          borderBottom: '1px solid #00ff9d',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '10px'
-        }}>
-          <div style={{
-            color: '#00ff9d',
-            fontSize: isMobile ? '12px' : '14px',
-            fontWeight: 500,
-            wordBreak: 'break-all'
-          }}>
-            {'user@messenger:~$ '}
-            <span style={{ color: '#ffffff', marginLeft: 8 }}>
-              {user.email}
-            </span>
+      <header className="messenger-header">
+        <div className="messenger-header-content">
+          <div className="user-info">
+            <span>{'user@messenger:~$'}</span>
+            <span className="email">{user.email}</span>
           </div>
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            alignItems: 'center'
-          }}>
-            {/* Mobile: Toggle Chats List Button */}
+          <div className="header-actions">
             {isMobile && (
               <button
                 onClick={() => {
                   setShowChatsList(!showChatsList);
                   setShowSearch(false);
                 }}
-                style={{
-                  background: showChatsList ? '#00ff9d' : 'transparent',
-                  color: showChatsList ? '#000000' : '#00ff9d',
-                  border: '1px solid #00ff9d',
-                  borderRadius: 0,
-                  padding: '4px 12px',
-                  fontSize: '10px',
-                  fontFamily: 'JetBrains Mono, monospace',
-                  cursor: 'pointer'
-                }}
+                className={`btn-terminal ${showChatsList ? 'btn-terminal-primary' : ''}`}
               >
                 {'[ CHATS ]'}
               </button>
             )}
             <button
               onClick={handleLogout}
-              style={{
-                background: 'transparent',
-                color: '#ff4444',
-                border: '1px solid #ff4444',
-                borderRadius: 0,
-                padding: isMobile ? '4px 12px' : '6px 16px',
-                fontSize: isMobile ? '10px' : '12px',
-                fontFamily: 'JetBrains Mono, monospace',
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                whiteSpace: 'nowrap'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#ff4444';
-                e.currentTarget.style.color = '#000000';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = '#ff4444';
-              }}
+              className="btn-terminal btn-terminal-danger"
             >
-              {'[LOGOUT]'}
+              {'[ LOGOUT ]'}
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Mobile Navigation */}
       {isMobile && selectedUser && (
-        <div style={{ marginBottom: '10px', display: 'flex', gap: '8px' }}>
+        <nav className="mobile-nav">
           {!showChatsList && (
             <button
               onClick={() => setShowSearch(!showSearch)}
-              style={{
-                flex: 1,
-                padding: '10px',
-                background: '#000000',
-                color: '#00ff9d',
-                border: '1px solid #00ff9d',
-                borderRadius: 0,
-                fontSize: '12px',
-                fontFamily: 'JetBrains Mono, monospace',
-                cursor: 'pointer'
-              }}
+              className="btn-terminal mobile-nav-btn"
             >
               {showSearch ? '[ BACK TO CHAT ]' : '[ SHOW USERS ]'}
             </button>
@@ -226,65 +153,39 @@ function App() {
           {showChatsList && (
             <button
               onClick={() => setShowChatsList(false)}
-              style={{
-                flex: 1,
-                padding: '10px',
-                background: '#000000',
-                color: '#00ff9d',
-                border: '1px solid #00ff9d',
-                borderRadius: 0,
-                fontSize: '12px',
-                fontFamily: 'JetBrains Mono, monospace',
-                cursor: 'pointer'
-              }}
+              className="btn-terminal mobile-nav-btn"
             >
               {'[ BACK TO CHAT ]'}
             </button>
           )}
-        </div>
+        </nav>
       )}
 
       {/* Main Content */}
-      <div style={{
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? '10px' : '20px'
-      }}>
-        {/* Left Panel - Search or Chats List on Mobile */}
-        {(isMobile ? showSearch : true) && !showChatsList && (
-          <div style={{
-            flex: 1,
-            width: isMobile ? '100%' : 'auto',
-            marginBottom: isMobile ? '10px' : '0'
-          }}>
+      <main className="messenger-main">
+        {/* Left Panel - Search */}
+        {showLeftPanel && !showChatsList && (
+          <div className="panel panel-search">
             <Search
               onSelectUser={handleSelectUser}
               currentUserId={user.uid}
-              isMobile={isMobile}
             />
           </div>
         )}
 
-        {/* Chats List - Always visible on desktop, toggle on mobile */}
+        {/* Chats List */}
         {(!isMobile || (isMobile && showChatsList)) && (
-          <div style={{
-            width: isMobile ? '100%' : 300,
-            flexShrink: 0
-          }}>
+          <div className="panel panel-chats">
             <ActiveChatsList
               currentUserId={user.uid}
               onSelectChat={handleSelectUser}
-              isMobile={isMobile}
             />
           </div>
         )}
 
         {/* Chat Panel */}
-        {(isMobile ? !showSearch && !showChatsList : true) && (
-          <div style={{
-            flex: 2,
-            width: isMobile ? '100%' : 'auto'
-          }}>
+        {showChatPanel && (
+          <div className="panel panel-chat">
             {selectedUser ? (
               <Chat
                 otherUser={selectedUser}
@@ -293,20 +194,8 @@ function App() {
                 onBack={() => setShowSearch(true)}
               />
             ) : (
-              <div style={{
-                border: '1px solid #00ff9d',
-                borderRadius: 0,
-                padding: isMobile ? '20px' : '40px',
-                textAlign: 'center',
-                background: '#000000',
-                color: '#00ff9d'
-              }}>
-                <div style={{
-                  fontSize: isMobile ? '10px' : '14px',
-                  whiteSpace: 'pre',
-                  fontFamily: 'JetBrains Mono, monospace',
-                  overflowX: 'auto'
-                }}>
+              <div className="empty-state">
+                <pre>
                   {`┌─────────────────────────────────────────┐
 │                                         │
 │    > SELECT A USER TO START CHATTING    │
@@ -315,17 +204,16 @@ function App() {
 │    chats list to select a user          │
 │                                         │
 └─────────────────────────────────────────┘`}
-                </div>
+                </pre>
               </div>
             )}
           </div>
         )}
-      </div>
+      </main>
 
-      {/* Notifications Component */}
+      {/* Notifications */}
       <Notifications
         currentUserId={user.uid}
-        isMobile={isMobile}
         onNotificationClick={handleNotificationClick}
       />
     </div>

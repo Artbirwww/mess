@@ -13,12 +13,6 @@ import {
   setDoc,
   getDoc
 } from 'firebase/firestore';
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -38,7 +32,6 @@ console.log('✅ Firebase Config:', {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
 
 export interface User {
   uid: string;
@@ -521,22 +514,16 @@ export const listenStorageChanges = (
   return () => window.removeEventListener('storage', handleStorageChange);
 };
 
-// Загрузить изображение в Storage
+// Загрузить изображение в Cloudinary
 export const uploadImage = async (
   file: File,
   fromId: string,
   toId: string
 ): Promise<string> => {
   try {
-    const chatId = [fromId, toId].sort().join('_');
-    const timestamp = Date.now();
-    const fileName = `${timestamp}_${file.name}`;
-    const storageRef = ref(storage, `chats/${chatId}/images/${fileName}`);
-    
-    await uploadBytes(storageRef, file);
-    const downloadUrl = await getDownloadURL(storageRef);
-    
-    return downloadUrl;
+    const { uploadImageToCloudinary } = await import('./lib/cloudinary');
+    const imageUrl = await uploadImageToCloudinary(file, fromId, toId);
+    return imageUrl;
   } catch (error) {
     console.error('Upload image error:', error);
     throw error;

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { searchUsers, User } from '../firebase';
+import './Search.css';
 
 interface SearchProps {
   onSelectUser: (user: User) => void;
   currentUserId: string;
-  isMobile?: boolean;
 }
 
-export default function Search({ onSelectUser, currentUserId, isMobile = false }: SearchProps) {
+export default function Search({ onSelectUser, currentUserId }: SearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,7 @@ export default function Search({ onSelectUser, currentUserId, isMobile = false }
 
   const handleSearch = async () => {
     if (!query.trim()) return;
-    
+
     setLoading(true);
     setSearched(true);
     const users = await searchUsers(query);
@@ -30,135 +30,70 @@ export default function Search({ onSelectUser, currentUserId, isMobile = false }
   };
 
   return (
-    <div style={{ 
-      border: '1px solid #00ff9d',
-      background: '#000000',
-      borderRadius: 0,
-      overflow: 'hidden'
-    }}>
-      <div style={{ 
-        background: '#000000',
-        padding: isMobile ? '8px 12px' : '12px 20px',
-        borderBottom: '1px solid #00ff9d'
-      }}>
-        <div style={{ color: '#00ff9d', fontSize: isMobile ? '12px' : '14px' }}>
+    <div className="search-container">
+      <div className="search-header">
+        <div className="search-title">
           {'> SEARCH_USERS'}
         </div>
       </div>
-      
-      <div style={{ padding: isMobile ? '15px' : '20px' }}>
-        <div style={{ marginBottom: isMobile ? '15px' : '20px' }}>
-          <label style={{ 
-            display: 'block', 
-            marginBottom: 8, 
-            color: '#00ff9d', 
-            fontSize: isMobile ? '10px' : '12px',
-            letterSpacing: 1
-          }}>
+
+      <div className="search-body">
+        <div className="search-form">
+          <label className="search-label">
             {'> SEARCH_BY_EMAIL:'}
           </label>
-          <div style={{ display: 'flex', gap: '8px', flexDirection: isMobile ? 'column' : 'row' }}>
+          <div className="search-input-group">
             <input
               type="text"
               placeholder="user@example.com"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              style={{ 
-                flex: 1, 
-                padding: isMobile ? '8px 10px' : '10px 12px',
-                background: '#000000',
-                border: '1px solid #00ff9d',
-                borderRadius: 0,
-                fontSize: isMobile ? '12px' : '14px',
-                fontFamily: 'JetBrains Mono, monospace',
-                color: '#00ff9d'
-              }}
+              className="search-input input-terminal"
             />
-            <button 
+            <button
               onClick={handleSearch}
               disabled={loading}
-              style={{
-                padding: isMobile ? '8px 16px' : '10px 24px',
-                background: '#00ff9d',
-                color: '#000000',
-                border: 'none',
-                borderRadius: 0,
-                fontSize: isMobile ? '10px' : '12px',
-                fontFamily: 'JetBrains Mono, monospace',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontWeight: 'bold',
-                width: isMobile ? '100%' : 'auto'
-              }}
+              className="search-btn"
             >
               {loading ? '[ SEARCHING ]' : '[ FIND ]'}
             </button>
           </div>
         </div>
-        
+
         {searched && (
-          <div>
-            <div style={{ 
-              marginBottom: isMobile ? '10px' : '15px', 
-              padding: isMobile ? '6px 10px' : '8px 12px',
-              background: '#1a1e2a',
-              borderLeft: `3px solid #00ff9d`,
-              fontSize: isMobile ? '9px' : '11px',
-              color: '#00ff9d'
-            }}>
+          <div className="search-results">
+            <div className="search-results-info">
               {`> RESULTS: ${results.length} USER(S) FOUND`}
             </div>
-            
+
             {results.length === 0 ? (
-              <div style={{ 
-                textAlign: 'center', 
-                padding: isMobile ? '20px' : '30px 20px',
-                border: '1px solid #2a2e3a',
-                color: '#666',
-                fontSize: isMobile ? '10px' : '12px',
-                whiteSpace: 'pre',
-                fontFamily: 'JetBrains Mono, monospace',
-                overflowX: 'auto'
-              }}>
-                {`┌─────────────────────────────────────┐
+              <div className="search-empty-state">
+                <pre>
+                  {`┌─────────────────────────────────────┐
 │                                     │
 │      > NO USERS FOUND               │
 │                                     │
 │      Try a different email address  │
 │                                     │
 └─────────────────────────────────────┘`}
+                </pre>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '6px' : '8px' }}>
+              <div className="search-results-list">
                 {results.map(user => (
-                  <div 
-                    key={user.uid} 
+                  <div
+                    key={user.uid}
+                    className="search-result-item"
                     onClick={() => onSelectUser(user)}
-                    style={{ 
-                      cursor: 'pointer', 
-                      padding: isMobile ? '10px 12px' : '12px 16px',
-                      border: '1px solid #2a2e3a',
-                      transition: 'all 0.3s',
-                      background: '#000000'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#1a1e2a';
-                      e.currentTarget.style.borderColor = '#00ff9d';
-                      e.currentTarget.style.transform = isMobile ? 'none' : 'translateX(5px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#000000';
-                      e.currentTarget.style.borderColor = '#2a2e3a';
-                      e.currentTarget.style.transform = 'translateX(0)';
-                    }}
                   >
-                    <div style={{ fontWeight: 'bold', color: '#00ff9d', fontSize: isMobile ? '12px' : '13px', wordBreak: 'break-all' }}>
+                    <div className="search-result-name">
                       {user.name || user.email}
                     </div>
-                    <div style={{ fontSize: isMobile ? '10px' : '11px', color: '#888', marginTop: 4, wordBreak: 'break-all' }}>
+                    <div className="search-result-email">
                       {user.email}
                     </div>
-                    <div style={{ fontSize: isMobile ? '9px' : '10px', color: '#666', marginTop: 6 }}>
+                    <div className="search-result-action">
                       {'> SELECT_TO_CHAT'}
                     </div>
                   </div>

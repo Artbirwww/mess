@@ -1,0 +1,2936 @@
+================================================================================
+                         СТРУКТУРА ПРОЕКТА
+================================================================================
+
+mess/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
+├── .gitignore
+├── eslint.config.js
+├── index.html
+├── package.json
+├── README.md
+├── storage.rules.txt
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+├── vite.config.ts
+├── public/
+│   ├── favicon.svg
+│   └── icons.svg
+└── src/
+    ├── assets/
+    │   ├── hero.png (бинарный)
+    │   ├── react.svg (бинарный)
+    │   └── vite.svg (бинарный)
+    ├── components/
+    │   ├── ActiveChatsList.tsx
+    │   ├── Auth.tsx
+    │   ├── Chat.tsx
+    │   ├── Notifications.tsx
+    │   ├── Search.tsx
+    │   └── UsersList.tsx (пустой)
+    ├── App.css
+    ├── App.tsx
+    ├── firebase.ts
+    ├── index.css
+    ├── main.tsx
+    └── vite-env.d.ts
+
+================================================================================
+                         ФАЙЛЫ ПРОЕКТА
+================================================================================
+
+--------------------------------------------------------------------------------
+[FILE] package.json
+--------------------------------------------------------------------------------
+{
+  "name": "firebase-messenger",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && gh-pages -d dist"
+  },
+  "dependencies": {
+    "firebase": "^10.7.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "gh-pages": "^6.3.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
+  }
+}
+
+--------------------------------------------------------------------------------
+[FILE] README.md
+--------------------------------------------------------------------------------
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      tseslint.configs.recommendedTypeChecked,
+      tseslint.configs.strictTypeChecked,
+      tseslint.configs.stylisticTypeChecked,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+])
+```
+
+--------------------------------------------------------------------------------
+[FILE] index.html
+--------------------------------------------------------------------------------
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Firebase Messenger</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+--------------------------------------------------------------------------------
+[FILE] vite.config.ts
+--------------------------------------------------------------------------------
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/mess/',
+  server: {
+    port: 5173,
+    open: true
+  }
+});
+
+--------------------------------------------------------------------------------
+[FILE] tsconfig.json
+--------------------------------------------------------------------------------
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+
+--------------------------------------------------------------------------------
+[FILE] tsconfig.app.json
+--------------------------------------------------------------------------------
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2023",
+    "useDefineForClassFields": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["src"]
+}
+
+--------------------------------------------------------------------------------
+[FILE] tsconfig.node.json
+--------------------------------------------------------------------------------
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+
+--------------------------------------------------------------------------------
+[FILE] eslint.config.js
+--------------------------------------------------------------------------------
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+])
+
+--------------------------------------------------------------------------------
+[FILE] storage.rules.txt
+--------------------------------------------------------------------------------
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /chats/{chatId}/images/{imageName} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+
+--------------------------------------------------------------------------------
+[FILE] .gitignore
+--------------------------------------------------------------------------------
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build files
+dist/
+dist-ssr/
+*.local
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+  
+--------------------------------------------------------------------------------  
+[FILE] .github/workflows/deploy.yml  
+-------------------------------------------------------------------------------- 
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Клонируем репозиторий
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      # 2. Устанавливаем Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      # 3. Устанавливаем зависимости (без проверки lockfile)
+      - name: Install dependencies
+        run: npm install --no-package-lock
+      
+      # 4. Собираем проект
+      - name: Build project
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+      
+      # 5. Деплоим на GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true  
+--------------------------------------------------------------------------------  
+[FILE] src/main.tsx  
+--------------------------------------------------------------------------------  
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);  
+--------------------------------------------------------------------------------  
+[FILE] src/vite-env.d.ts  
+--------------------------------------------------------------------------------  
+interface ImportMetaEnv {
+  readonly VITE_FIREBASE_API_KEY: string;
+  readonly VITE_FIREBASE_AUTH_DOMAIN: string;
+  readonly VITE_FIREBASE_PROJECT_ID: string;
+  readonly VITE_FIREBASE_STORAGE_BUCKET: string;
+  readonly VITE_FIREBASE_MESSAGING_SENDER_ID: string;
+  readonly VITE_FIREBASE_APP_ID: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}  
+--------------------------------------------------------------------------------  
+[FILE] src/index.css  
+--------------------------------------------------------------------------------  
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  background: #000000;
+  min-height: 100vh;
+  color: #00ff9d;
+}
+
+#root {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Стили для скроллбара в стиле терминала */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+  border-left: 1px solid #00ff9d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00ff9d;
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00cc7d;
+}
+
+/* Анимация мигающего курсора */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  #root {
+    padding: 10px;
+  }
+  
+  /* Уменьшаем шрифты на мобильных */
+  body {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  #root {
+    padding: 5px;
+  }
+  
+  body {
+    font-size: 12px;
+  }
+}  
+--------------------------------------------------------------------------------  
+[FILE] src/App.css  
+--------------------------------------------------------------------------------  
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.hero {
+  position: relative;
+
+  .base,
+  .framework,
+  .vite {
+    inset-inline: 0;
+    margin: 0 auto;
+  }
+
+  .base {
+    width: 170px;
+    position: relative;
+    z-index: 0;
+  }
+
+  .framework,
+  .vite {
+    position: absolute;
+  }
+
+  .framework {
+    z-index: 1;
+    top: 34px;
+    height: 28px;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
+      scale(1.4);
+  }
+
+  .vite {
+    z-index: 0;
+    top: 107px;
+    height: 26px;
+    width: auto;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
+      scale(0.8);
+  }
+}
+
+#center {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  place-content: center;
+  place-items: center;
+  flex-grow: 1;
+
+  @media (max-width: 1024px) {
+    padding: 32px 20px 24px;
+    gap: 18px;
+  }
+}
+
+#next-steps {
+  display: flex;
+  border-top: 1px solid var(--border);
+  text-align: left;
+
+  & > div {
+    flex: 1 1 0;
+    padding: 32px;
+    @media (max-width: 1024px) {
+      padding: 24px 20px;
+    }
+  }
+
+  .icon {
+    margin-bottom: 16px;
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+#docs {
+  border-right: 1px solid var(--border);
+
+  @media (max-width: 1024px) {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+#next-steps ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  margin: 32px 0 0;
+
+  .logo {
+    height: 18px;
+  }
+
+  a {
+    color: var(--text-h);
+    font-size: 16px;
+    border-radius: 6px;
+    background: var(--social-bg);
+    display: flex;
+    padding: 6px 12px;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: box-shadow 0.3s;
+
+    &:hover {
+      box-shadow: var(--shadow);
+    }
+    .button-icon {
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    li {
+      flex: 1 1 calc(50% - 8px);
+    }
+
+    a {
+      width: 100%;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+  }
+}
+
+#spacer {
+  height: 88px;
+  border-top: 1px solid var(--border);
+  @media (max-width: 1024px) {
+    height: 48px;
+  }
+}
+
+.ticks {
+  position: relative;
+  width: 100%;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4.5px;
+    border: 5px solid transparent;
+  }
+
+  &::before {
+    left: 0;
+    border-left-color: var(--border);
+  }
+  &::after {
+    right: 0;
+    border-right-color: var(--border);
+  }
+}
+  
+--------------------------------------------------------------------------------  
+[FILE] src/firebase.ts  
+--------------------------------------------------------------------------------  
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  orderBy,
+  onSnapshot,
+  doc,
+  setDoc,
+  getDoc
+} from 'firebase/firestore';
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from 'firebase/storage';
+
+// ВАШИ ПРЯМЫЕ КЛЮЧИ ИЗ FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyAaArHzBj0VKSzg4FLiSZi-BErj8vQj2_A",
+  authDomain: "mess-50bb2.firebaseapp.com",
+  projectId: "mess-50bb2",
+  storageBucket: "mess-50bb2.firebasestorage.app",
+  messagingSenderId: "1014513579106",
+  appId: "1:1014513579106:web:e162f3af943ecdc9824d3b"
+};
+
+console.log('✅ Firebase Config:', {
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain,
+  apiKeyExists: !!firebaseConfig.apiKey
+});
+
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+
+export interface User {
+  uid: string;
+  email: string;
+  name?: string;
+  createdAt?: number;
+}
+
+export interface Message {
+  id?: string;
+  text: string;
+  fromId: string;
+  toId: string;
+  timestamp: number;
+  imageUrl?: string;
+}
+
+// Создание профиля
+export const createUserProfile = async (userId: string, email: string, name: string) => {
+  try {
+    await setDoc(doc(db, 'users', userId), {
+      uid: userId,
+      email,
+      name,
+      createdAt: Date.now(),
+    });
+    console.log('✅ Profile created');
+  } catch (error) {
+    console.error('Error creating profile:', error);
+  }
+};
+
+// Поиск пользователей
+export const searchUsers = async (email: string): Promise<User[]> => {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '>=', email), where('email', '<=', email + '\uf8ff'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
+  } catch (error) {
+    console.error('Search error:', error);
+    return [];
+  }
+};
+
+// Получить всех пользователей
+export const getAllUsers = async (): Promise<User[]> => {
+  try {
+    const snapshot = await getDocs(collection(db, 'users'));
+    return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
+  } catch (error) {
+    console.error('Get users error:', error);
+    return [];
+  }
+};
+
+// Отправить сообщение
+export const sendMessage = async (
+  fromId: string,
+  toId: string,
+  text: string
+) => {
+  try {
+    const chatId = [fromId, toId].sort().join('_');
+    await addDoc(collection(db, 'chats', chatId, 'messages'), {
+      text,
+      fromId,
+      toId,
+      timestamp: Date.now(),
+    });
+    
+    // Обновляем localStorage для отправителя
+    const toUser = await getUserById(toId);
+    updateChatInStorage(
+      fromId,
+      toId,
+      toUser?.email || toId,
+      toUser?.name,
+      text,
+      true
+    );
+    
+    // Обновляем localStorage для получателя (увеличиваем счётчик непрочитанных)
+    const fromUser = await getUserById(fromId);
+    updateChatInStorage(
+      toId,
+      fromId,
+      fromUser?.email || fromId,
+      fromUser?.name,
+      text,
+      false
+    );
+  } catch (error) {
+    console.error('Send error:', error);
+  }
+};
+
+// Слушать сообщения
+export const listenMessages = (
+  userId: string,
+  otherUserId: string,
+  callback: (messages: Message[]) => void
+) => {
+  const chatId = [userId, otherUserId].sort().join('_');
+  const messagesRef = collection(db, 'chats', chatId, 'messages');
+  const q = query(messagesRef, orderBy('timestamp'));
+  
+  return onSnapshot(q, (snapshot) => {
+    const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+    callback(messages);
+  });
+};
+
+// Проверить существование пользователя
+export const checkUserExists = async (userId: string): Promise<boolean> => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    return userDoc.exists();
+  } catch (error) {
+    console.error('Check user error:', error);
+    return false;
+  }
+};
+
+// Получить пользователя по ID
+export const getUserById = async (userId: string): Promise<User | null> => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      return { uid: userDoc.id, ...userDoc.data() } as User;
+    }
+    return null;
+  } catch (error) {
+    console.error('Get user error:', error);
+    return null;
+  }
+};
+
+// Интерфейс для активного чата
+export interface ActiveChat {
+  id: string;
+  otherUserId: string;
+  otherUserName?: string;
+  otherUserEmail: string;
+  lastMessage?: string;
+  lastMessageTime?: number;
+  unreadCount: number;
+}
+
+// Получить все ID чатов пользователя
+export const getUserChatIds = async (userId: string): Promise<string[]> => {
+  try {
+    const chatsSnapshot = await getDocs(collection(db, 'chats'));
+    const chatIds: string[] = [];
+    chatsSnapshot.docs.forEach(doc => {
+      const [user1, user2] = doc.id.split('_');
+      if (user1 === userId || user2 === userId) {
+        chatIds.push(doc.id);
+      }
+    });
+    return chatIds;
+  } catch (error) {
+    console.error('Get chat ids error:', error);
+    return [];
+  }
+};
+
+// Получить последний сообщение в чате
+export const getLastMessage = async (chatId: string): Promise<Message | null> => {
+  try {
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    const q = query(messagesRef, orderBy('timestamp', 'desc'));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      return { id: doc.id, ...doc.data() } as Message;
+    }
+    return null;
+  } catch (error) {
+    console.error('Get last message error:', error);
+    return null;
+  }
+};
+
+// Получить активные чаты пользователя
+export const getActiveChats = async (userId: string): Promise<ActiveChat[]> => {
+  try {
+    const chatIds = await getUserChatIds(userId);
+    const activeChats: ActiveChat[] = [];
+
+    for (const chatId of chatIds) {
+      const [user1, user2] = chatId.split('_');
+      const otherUserId = user1 === userId ? user2 : user1;
+      const otherUser = await getUserById(otherUserId);
+
+      if (otherUser) {
+        const lastMessage = await getLastMessage(chatId);
+        activeChats.push({
+          id: chatId,
+          otherUserId,
+          otherUserName: otherUser.name,
+          otherUserEmail: otherUser.email,
+          lastMessage: lastMessage?.text,
+          lastMessageTime: lastMessage?.timestamp,
+          unreadCount: 0
+        });
+      }
+    }
+
+    return activeChats.sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
+  } catch (error) {
+    console.error('Get active chats error:', error);
+    return [];
+  }
+};
+
+// Слушать активные чаты в реальном времени
+export const listenActiveChats = (
+  userId: string,
+  callback: (chats: ActiveChat[]) => void
+) => {
+  console.log('[listenActiveChats] Подписка для пользователя:', userId);
+  
+  // Сначала получаем все чаты
+  const loadChats = async () => {
+    console.log('[listenActiveChats] Загрузка чатов...');
+    const chatIds = await getUserChatIds(userId);
+    console.log('[listenActiveChats] Найдены chatIds:', chatIds);
+    const activeChats: ActiveChat[] = [];
+
+    for (const chatId of chatIds) {
+      const [user1, user2] = chatId.split('_');
+      const otherUserId = user1 === userId ? user2 : user1;
+      const otherUser = await getUserById(otherUserId);
+      console.log('[listenActiveChats] Другой пользователь:', otherUser);
+
+      if (otherUser) {
+        const lastMessage = await getLastMessage(chatId);
+        console.log('[listenActiveChats] Последнее сообщение:', lastMessage);
+        activeChats.push({
+          id: chatId,
+          otherUserId,
+          otherUserName: otherUser.name,
+          otherUserEmail: otherUser.email,
+          lastMessage: lastMessage?.text,
+          lastMessageTime: lastMessage?.timestamp,
+          unreadCount: 0
+        });
+      }
+    }
+
+    const sorted = activeChats.sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
+    console.log('[listenActiveChats] Итоговые чаты:', sorted);
+    callback(sorted);
+  };
+
+  // Загружаем чаты при подписке
+  loadChats();
+
+  // Создаем unsubscribe функции для всех чатов
+  const unsubscribers: (() => void)[] = [];
+  
+  getUserChatIds(userId).then(chatIds => {
+    console.log('[listenActiveChats] Создание подписок на сообщения для чатов:', chatIds);
+    chatIds.forEach(chatId => {
+      const messagesRef = collection(db, 'chats', chatId, 'messages');
+      const unsubscribe = onSnapshot(messagesRef, () => {
+        console.log('[listenActiveChats] Изменения в чате:', chatId);
+        loadChats();
+      });
+      unsubscribers.push(unsubscribe);
+    });
+  });
+
+  // Возвращаем функцию отписки
+  return () => {
+    console.log('[listenActiveChats] Отписка от всех чатов');
+    unsubscribers.forEach(unsub => unsub());
+  };
+};
+
+// Подсчитать непрочитанные сообщения в чате
+export const getUnreadCount = async (
+  userId: string,
+  otherUserId: string,
+  lastReadTime: number = 0
+): Promise<number> => {
+  try {
+    const chatId = [userId, otherUserId].sort().join('_');
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    const q = query(
+      messagesRef,
+      where('fromId', '==', otherUserId),
+      where('timestamp', '>', lastReadTime)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.size;
+  } catch (error) {
+    console.error('Get unread count error:', error);
+    return 0;
+  }
+};
+
+// Обновить время последнего прочтения
+export const updateLastReadTime = async (
+  userId: string,
+  otherUserId: string,
+  timestamp: number
+) => {
+  try {
+    const readTimeId = `${userId}_${otherUserId}`;
+    await setDoc(doc(db, 'readTimes', readTimeId), {
+      userId,
+      otherUserId,
+      lastReadTime: timestamp,
+      updatedAt: Date.now()
+    }, { merge: true });
+  } catch (error) {
+    console.error('Update read time error:', error);
+  }
+};
+
+// Получить время последнего прочтения
+export const getLastReadTime = async (
+  userId: string,
+  otherUserId: string
+): Promise<number> => {
+  try {
+    const readTimeId = `${userId}_${otherUserId}`;
+    const docRef = doc(db, 'readTimes', readTimeId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().lastReadTime || 0;
+    }
+    return 0;
+  } catch (error) {
+    console.error('Get last read time error:', error);
+    return 0;
+  }
+};
+
+// === Функции для работы с localStorage ===
+
+// Интерфейс для чата в localStorage
+export interface LocalChat {
+  id: string;
+  otherUserId: string;
+  otherUserName?: string;
+  otherUserEmail: string;
+  lastMessage?: string;
+  lastMessageTime: number;
+  unreadCount: number;
+}
+
+// Ключ для localStorage
+const getStorageKey = (userId: string) => `messenger_chats_${userId}`;
+
+// Получить чаты из localStorage
+export const getChatsFromStorage = (userId: string): LocalChat[] => {
+  try {
+    const key = getStorageKey(userId);
+    const data = localStorage.getItem(key);
+    if (data) {
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Get chats from storage error:', error);
+  }
+  return [];
+};
+
+// Сохранить чаты в localStorage
+export const saveChatsToStorage = (userId: string, chats: LocalChat[]) => {
+  try {
+    const key = getStorageKey(userId);
+    // Сортируем по времени последнего сообщения
+    const sorted = chats.sort((a, b) => b.lastMessageTime - a.lastMessageTime);
+    localStorage.setItem(key, JSON.stringify(sorted));
+  } catch (error) {
+    console.error('Save chats to storage error:', error);
+  }
+};
+
+// Обновить или добавить чат в localStorage
+export const updateChatInStorage = (
+  userId: string,
+  otherUserId: string,
+  otherUserEmail: string,
+  otherUserName?: string,
+  lastMessage?: string,
+  isFromMe: boolean = false
+) => {
+  try {
+    const chats = getChatsFromStorage(userId);
+    const chatId = [userId, otherUserId].sort().join('_');
+    const existingChat = chats.find(c => c.otherUserId === otherUserId);
+
+    if (existingChat) {
+      // Обновляем существующий чат
+      existingChat.lastMessage = lastMessage;
+      existingChat.lastMessageTime = Date.now();
+      if (otherUserName) existingChat.otherUserName = otherUserName;
+      // Сбрасываем счётчик непрочитанных, если сообщение от нас
+      if (isFromMe) {
+        existingChat.unreadCount = 0;
+      }
+    } else {
+      // Добавляем новый чат
+      chats.push({
+        id: chatId,
+        otherUserId,
+        otherUserEmail,
+        otherUserName,
+        lastMessage,
+        lastMessageTime: Date.now(),
+        unreadCount: isFromMe ? 0 : 1
+      });
+    }
+
+    saveChatsToStorage(userId, chats);
+    return chats;
+  } catch (error) {
+    console.error('Update chat in storage error:', error);
+    return [];
+  }
+};
+
+// Увеличить счётчик непрочитанных сообщений
+export const incrementUnreadInStorage = (
+  userId: string,
+  otherUserId: string
+) => {
+  try {
+    const chats = getChatsFromStorage(userId);
+    const chat = chats.find(c => c.otherUserId === otherUserId);
+    if (chat) {
+      chat.unreadCount += 1;
+      saveChatsToStorage(userId, chats);
+    }
+    return chats;
+  } catch (error) {
+    console.error('Increment unread in storage error:', error);
+    return [];
+  }
+};
+
+// Сбросить счётчик непрочитанных
+export const resetUnreadInStorage = (userId: string, otherUserId: string) => {
+  try {
+    const chats = getChatsFromStorage(userId);
+    const chat = chats.find(c => c.otherUserId === otherUserId);
+    if (chat) {
+      chat.unreadCount = 0;
+      saveChatsToStorage(userId, chats);
+    }
+    return chats;
+  } catch (error) {
+    console.error('Reset unread in storage error:', error);
+    return [];
+  }
+};
+
+// Слушать изменения в localStorage (для синхронизации между вкладками)
+export const listenStorageChanges = (
+  userId: string,
+  callback: (chats: LocalChat[]) => void
+) => {
+  const handleStorageChange = (e: StorageEvent) => {
+    const key = getStorageKey(userId);
+    if (e.key === key && e.newValue) {
+      try {
+        callback(JSON.parse(e.newValue));
+      } catch (error) {
+        console.error('Parse storage change error:', error);
+      }
+    }
+  };
+
+  window.addEventListener('storage', handleStorageChange);
+  return () => window.removeEventListener('storage', handleStorageChange);
+};
+
+// Загрузить изображение в Storage
+export const uploadImage = async (
+  file: File,
+  fromId: string,
+  toId: string
+): Promise<string> => {
+  try {
+    const chatId = [fromId, toId].sort().join('_');
+    const timestamp = Date.now();
+    const fileName = `${timestamp}_${file.name}`;
+    const storageRef = ref(storage, `chats/${chatId}/images/${fileName}`);
+    
+    await uploadBytes(storageRef, file);
+    const downloadUrl = await getDownloadURL(storageRef);
+    
+    return downloadUrl;
+  } catch (error) {
+    console.error('Upload image error:', error);
+    throw error;
+  }
+};
+
+// Отправить сообщение с изображением
+export const sendImageMessage = async (
+  fromId: string,
+  toId: string,
+  imageUrl: string
+) => {
+  try {
+    const chatId = [fromId, toId].sort().join('_');
+    await addDoc(collection(db, 'chats', chatId, 'messages'), {
+      text: '',
+      imageUrl,
+      fromId,
+      toId,
+      timestamp: Date.now(),
+    });
+
+    // Обновляем localStorage для отправителя
+    const toUser = await getUserById(toId);
+    updateChatInStorage(
+      fromId,
+      toId,
+      toUser?.email || toId,
+      toUser?.name,
+      '📷 Image',
+      true
+    );
+
+    // Обновляем localStorage для получателя
+    const fromUser = await getUserById(fromId);
+    updateChatInStorage(
+      toId,
+      fromId,
+      fromUser?.email || fromId,
+      fromUser?.name,
+      '📷 Image',
+      false
+    );
+  } catch (error) {
+    console.error('Send image error:', error);
+  }
+};  
+--------------------------------------------------------------------------------  
+[FILE] src/App.tsx  
+--------------------------------------------------------------------------------  
+import { useState, useEffect } from 'react';
+import { auth, checkUserExists, createUserProfile, getAllUsers, User } from './firebase';
+import Auth from './components/Auth';
+import Search from './components/Search';
+import Chat from './components/Chat';
+import ActiveChatsList from './components/ActiveChatsList';
+import Notifications from './components/Notifications';
+
+interface SelectedUser {
+  uid: string;
+  email: string;
+  name?: string;
+}
+
+function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showSearch, setShowSearch] = useState(true);
+  const [showChatsList, setShowChatsList] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        const userData = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          displayName: firebaseUser.displayName || undefined
+        };
+        setUser(userData);
+        
+        const exists = await checkUserExists(firebaseUser.uid);
+        if (!exists) {
+          console.log('[SYSTEM] Creating user profile...');
+          const displayName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User';
+          await createUserProfile(firebaseUser.uid, firebaseUser.email || '', displayName);
+        }
+      } else {
+        setUser(null);
+        setSelectedUser(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    setSelectedUser(null);
+    setShowSearch(true);
+  };
+
+  const handleSelectUser = (selectedUser: SelectedUser) => {
+    setSelectedUser(selectedUser);
+    if (isMobile) {
+      setShowSearch(false);
+      setShowChatsList(false);
+    }
+  };
+
+  const handleNotificationClick = async (selectedUser: User) => {
+    setSelectedUser({
+      uid: selectedUser.uid,
+      email: selectedUser.email,
+      name: selectedUser.name
+    });
+    if (isMobile) {
+      setShowSearch(false);
+      setShowChatsList(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      console.log(`[SYSTEM] User logged in: ${user.email}`);
+      getAllUsers().then(users => {
+        console.log(`[SYSTEM] Total users in database: ${users.length}`);
+      });
+    }
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontFamily: 'JetBrains Mono, monospace',
+        padding: '20px',
+        textAlign: 'center'
+      }}>
+        <div style={{ color: '#00ff9d', fontSize: isMobile ? '14px' : '16px' }}>
+          {'> LOADING SYSTEM...'}
+          <span className="cursor-blink">_</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Auth onAuth={() => setUser(auth.currentUser as User)} />;
+  }
+
+  return (
+    <div style={{
+      maxWidth: 1400,
+      margin: '0 auto',
+      padding: isMobile ? '10px' : '20px',
+      fontFamily: 'JetBrains Mono, monospace'
+    }}>
+      {/* Terminal Header */}
+      <div style={{
+        background: '#000000',
+        border: '1px solid #00ff9d',
+        borderRadius: 0,
+        marginBottom: isMobile ? '10px' : '20px',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          background: '#000000',
+          padding: isMobile ? '8px 12px' : '12px 20px',
+          borderBottom: '1px solid #00ff9d',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '10px'
+        }}>
+          <div style={{
+            color: '#00ff9d',
+            fontSize: isMobile ? '12px' : '14px',
+            fontWeight: 500,
+            wordBreak: 'break-all'
+          }}>
+            {'user@messenger:~$ '}
+            <span style={{ color: '#ffffff', marginLeft: 8 }}>
+              {user.email}
+            </span>
+          </div>
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center'
+          }}>
+            {/* Mobile: Toggle Chats List Button */}
+            {isMobile && (
+              <button
+                onClick={() => {
+                  setShowChatsList(!showChatsList);
+                  setShowSearch(false);
+                }}
+                style={{
+                  background: showChatsList ? '#00ff9d' : 'transparent',
+                  color: showChatsList ? '#000000' : '#00ff9d',
+                  border: '1px solid #00ff9d',
+                  borderRadius: 0,
+                  padding: '4px 12px',
+                  fontSize: '10px',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  cursor: 'pointer'
+                }}
+              >
+                {'[ CHATS ]'}
+              </button>
+            )}
+            <button
+              onClick={handleLogout}
+              style={{
+                background: 'transparent',
+                color: '#ff4444',
+                border: '1px solid #ff4444',
+                borderRadius: 0,
+                padding: isMobile ? '4px 12px' : '6px 16px',
+                fontSize: isMobile ? '10px' : '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#ff4444';
+                e.currentTarget.style.color = '#000000';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#ff4444';
+              }}
+            >
+              {'[LOGOUT]'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Navigation */}
+      {isMobile && selectedUser && (
+        <div style={{ marginBottom: '10px', display: 'flex', gap: '8px' }}>
+          {!showChatsList && (
+            <button
+              onClick={() => setShowSearch(!showSearch)}
+              style={{
+                flex: 1,
+                padding: '10px',
+                background: '#000000',
+                color: '#00ff9d',
+                border: '1px solid #00ff9d',
+                borderRadius: 0,
+                fontSize: '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                cursor: 'pointer'
+              }}
+            >
+              {showSearch ? '[ BACK TO CHAT ]' : '[ SHOW USERS ]'}
+            </button>
+          )}
+          {showChatsList && (
+            <button
+              onClick={() => setShowChatsList(false)}
+              style={{
+                flex: 1,
+                padding: '10px',
+                background: '#000000',
+                color: '#00ff9d',
+                border: '1px solid #00ff9d',
+                borderRadius: 0,
+                fontSize: '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                cursor: 'pointer'
+              }}
+            >
+              {'[ BACK TO CHAT ]'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div style={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? '10px' : '20px'
+      }}>
+        {/* Left Panel - Search or Chats List on Mobile */}
+        {(isMobile ? showSearch : true) && !showChatsList && (
+          <div style={{
+            flex: 1,
+            width: isMobile ? '100%' : 'auto',
+            marginBottom: isMobile ? '10px' : '0'
+          }}>
+            <Search
+              onSelectUser={handleSelectUser}
+              currentUserId={user.uid}
+              isMobile={isMobile}
+            />
+          </div>
+        )}
+
+        {/* Chats List - Always visible on desktop, toggle on mobile */}
+        {(!isMobile || (isMobile && showChatsList)) && (
+          <div style={{
+            width: isMobile ? '100%' : 300,
+            flexShrink: 0
+          }}>
+            <ActiveChatsList
+              currentUserId={user.uid}
+              onSelectChat={handleSelectUser}
+              isMobile={isMobile}
+            />
+          </div>
+        )}
+
+        {/* Chat Panel */}
+        {(isMobile ? !showSearch && !showChatsList : true) && (
+          <div style={{
+            flex: 2,
+            width: isMobile ? '100%' : 'auto'
+          }}>
+            {selectedUser ? (
+              <Chat
+                otherUser={selectedUser}
+                currentUser={user}
+                isMobile={isMobile}
+                onBack={() => setShowSearch(true)}
+              />
+            ) : (
+              <div style={{
+                border: '1px solid #00ff9d',
+                borderRadius: 0,
+                padding: isMobile ? '20px' : '40px',
+                textAlign: 'center',
+                background: '#000000',
+                color: '#00ff9d'
+              }}>
+                <div style={{
+                  fontSize: isMobile ? '10px' : '14px',
+                  whiteSpace: 'pre',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  overflowX: 'auto'
+                }}>
+                  {`┌─────────────────────────────────────────┐
+│                                         │
+│    > SELECT A USER TO START CHATTING    │
+│                                         │
+│    Use the search panel or active       │
+│    chats list to select a user          │
+│                                         │
+└─────────────────────────────────────────┘`}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Notifications Component */}
+      <Notifications
+        currentUserId={user.uid}
+        isMobile={isMobile}
+        onNotificationClick={handleNotificationClick}
+      />
+    </div>
+  );
+}
+
+export default App;  
+--------------------------------------------------------------------------------  
+[FILE] src/components/Auth.tsx  
+--------------------------------------------------------------------------------  
+import { useState, useEffect } from 'react';
+import { auth, createUserProfile } from '../firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+
+interface AuthProps {
+  onAuth: () => void;
+}
+
+export default function Auth({ onAuth }: AuthProps) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        const displayName = email.split('@')[0];
+        
+        await updateProfile(user, { displayName });
+        await createUserProfile(user.uid, user.email!, displayName);
+      }
+      onAuth();
+    } catch (err: any) {
+      let errorMessage = '';
+      switch (err.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = 'ERROR: Email already registered';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'ERROR: Invalid email format';
+          break;
+        case 'auth/weak-password':
+          errorMessage = 'ERROR: Password must be at least 6 characters';
+          break;
+        case 'auth/user-not-found':
+          errorMessage = 'ERROR: User not found';
+          break;
+        case 'auth/wrong-password':
+          errorMessage = 'ERROR: Wrong password';
+          break;
+        default:
+          errorMessage = `ERROR: ${err.message}`;
+      }
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ 
+      maxWidth: isMobile ? '95%' : '500px', 
+      margin: isMobile ? '40px auto' : '80px auto', 
+      padding: 0,
+      fontFamily: 'JetBrains Mono, monospace'
+    }}>
+      <div style={{ 
+        border: '1px solid #00ff9d',
+        background: '#000000',
+        borderRadius: 0,
+        overflow: 'hidden'
+      }}>
+        {/* Terminal Header */}
+        <div style={{ 
+          background: '#1a1e2a',
+          padding: isMobile ? '8px 12px' : '12px 20px',
+          borderBottom: '1px solid #00ff9d'
+        }}>
+          <div style={{ color: '#00ff9d', fontSize: isMobile ? '12px' : '14px' }}>
+            {'user@auth:~$ '}{isLogin ? 'LOGIN_SYSTEM' : 'REGISTER_SYSTEM'}
+          </div>
+        </div>
+        
+        {/* Form Content */}
+        <div style={{ padding: isMobile ? '20px' : '30px' }}>
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: isMobile ? '15px' : '20px' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: 8, 
+                color: '#00ff9d', 
+                fontSize: isMobile ? '10px' : '12px',
+                letterSpacing: 1
+              }}>
+                {'> EMAIL_ADDRESS:'}
+              </label>
+              <input
+                type="email"
+                placeholder="user@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{ 
+                  width: '100%', 
+                  padding: isMobile ? '8px 10px' : '10px 12px',
+                  background: '#000000',
+                  border: '1px solid #00ff9d',
+                  borderRadius: 0,
+                  fontSize: isMobile ? '12px' : '14px',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  color: '#00ff9d'
+                }}
+              />
+            </div>
+            
+            <div style={{ marginBottom: isMobile ? '20px' : '25px' }}>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: 8, 
+                color: '#00ff9d', 
+                fontSize: isMobile ? '10px' : '12px',
+                letterSpacing: 1
+              }}>
+                {'> PASSWORD:'}
+              </label>
+              <input
+                type="password"
+                placeholder="••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                style={{ 
+                  width: '100%', 
+                  padding: isMobile ? '8px 10px' : '10px 12px',
+                  background: '#000000',
+                  border: '1px solid #00ff9d',
+                  borderRadius: 0,
+                  fontSize: isMobile ? '12px' : '14px',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  color: '#00ff9d'
+                }}
+              />
+            </div>
+            
+            {error && (
+              <div style={{ 
+                background: '#2a1a1a',
+                borderLeft: `3px solid #ff4444`,
+                padding: isMobile ? '8px 10px' : '10px 12px',
+                marginBottom: isMobile ? '15px' : '20px',
+                color: '#ff8888',
+                fontSize: isMobile ? '10px' : '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                wordBreak: 'break-word'
+              }}>
+                {error}
+              </div>
+            )}
+            
+            <button 
+              type="submit" 
+              disabled={loading}
+              style={{ 
+                width: '100%', 
+                padding: isMobile ? '10px' : '12px',
+                background: '#00ff9d',
+                color: '#000000',
+                border: 'none',
+                borderRadius: 0,
+                fontSize: isMobile ? '12px' : '14px',
+                fontWeight: 'bold',
+                fontFamily: 'JetBrains Mono, monospace',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1,
+                transition: 'all 0.3s'
+              }}
+            >
+              {loading ? '[ PROCESSING... ]' : (isLogin ? '[ LOGIN ]' : '[ REGISTER ]')}
+            </button>
+          </form>
+          
+          <div style={{ 
+            marginTop: isMobile ? '15px' : '20px', 
+            textAlign: 'center',
+            borderTop: '1px solid #2a2e3a',
+            paddingTop: isMobile ? '15px' : '20px'
+          }}>
+            <button 
+              onClick={() => setIsLogin(!isLogin)}
+              style={{ 
+                background: 'transparent',
+                color: '#00ff9d',
+                border: '1px solid #00ff9d',
+                borderRadius: 0,
+                padding: isMobile ? '6px 12px' : '8px 16px',
+                fontSize: isMobile ? '10px' : '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                cursor: 'pointer',
+                transition: 'all 0.3s',
+                width: isMobile ? '100%' : 'auto'
+              }}
+            >
+              {isLogin ? '> CREATE_NEW_ACCOUNT' : '> BACK_TO_LOGIN'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}  
+--------------------------------------------------------------------------------  
+[FILE] src/components/Search.tsx  
+--------------------------------------------------------------------------------  
+import { useState } from 'react';
+import { searchUsers, User } from '../firebase';
+
+interface SearchProps {
+  onSelectUser: (user: User) => void;
+  currentUserId: string;
+  isMobile?: boolean;
+}
+
+export default function Search({ onSelectUser, currentUserId, isMobile = false }: SearchProps) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    
+    setLoading(true);
+    setSearched(true);
+    const users = await searchUsers(query);
+    setResults(users.filter(u => u.uid !== currentUserId));
+    setLoading(false);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  return (
+    <div style={{ 
+      border: '1px solid #00ff9d',
+      background: '#000000',
+      borderRadius: 0,
+      overflow: 'hidden'
+    }}>
+      <div style={{ 
+        background: '#000000',
+        padding: isMobile ? '8px 12px' : '12px 20px',
+        borderBottom: '1px solid #00ff9d'
+      }}>
+        <div style={{ color: '#00ff9d', fontSize: isMobile ? '12px' : '14px' }}>
+          {'> SEARCH_USERS'}
+        </div>
+      </div>
+      
+      <div style={{ padding: isMobile ? '15px' : '20px' }}>
+        <div style={{ marginBottom: isMobile ? '15px' : '20px' }}>
+          <label style={{ 
+            display: 'block', 
+            marginBottom: 8, 
+            color: '#00ff9d', 
+            fontSize: isMobile ? '10px' : '12px',
+            letterSpacing: 1
+          }}>
+            {'> SEARCH_BY_EMAIL:'}
+          </label>
+          <div style={{ display: 'flex', gap: '8px', flexDirection: isMobile ? 'column' : 'row' }}>
+            <input
+              type="text"
+              placeholder="user@example.com"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyPress={handleKeyPress}
+              style={{ 
+                flex: 1, 
+                padding: isMobile ? '8px 10px' : '10px 12px',
+                background: '#000000',
+                border: '1px solid #00ff9d',
+                borderRadius: 0,
+                fontSize: isMobile ? '12px' : '14px',
+                fontFamily: 'JetBrains Mono, monospace',
+                color: '#00ff9d'
+              }}
+            />
+            <button 
+              onClick={handleSearch}
+              disabled={loading}
+              style={{
+                padding: isMobile ? '8px 16px' : '10px 24px',
+                background: '#00ff9d',
+                color: '#000000',
+                border: 'none',
+                borderRadius: 0,
+                fontSize: isMobile ? '10px' : '12px',
+                fontFamily: 'JetBrains Mono, monospace',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold',
+                width: isMobile ? '100%' : 'auto'
+              }}
+            >
+              {loading ? '[ SEARCHING ]' : '[ FIND ]'}
+            </button>
+          </div>
+        </div>
+        
+        {searched && (
+          <div>
+            <div style={{ 
+              marginBottom: isMobile ? '10px' : '15px', 
+              padding: isMobile ? '6px 10px' : '8px 12px',
+              background: '#1a1e2a',
+              borderLeft: `3px solid #00ff9d`,
+              fontSize: isMobile ? '9px' : '11px',
+              color: '#00ff9d'
+            }}>
+              {`> RESULTS: ${results.length} USER(S) FOUND`}
+            </div>
+            
+            {results.length === 0 ? (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: isMobile ? '20px' : '30px 20px',
+                border: '1px solid #2a2e3a',
+                color: '#666',
+                fontSize: isMobile ? '10px' : '12px',
+                whiteSpace: 'pre',
+                fontFamily: 'JetBrains Mono, monospace',
+                overflowX: 'auto'
+              }}>
+                {`┌─────────────────────────────────────┐
+│                                     │
+│      > NO USERS FOUND               │
+│                                     │
+│      Try a different email address  │
+│                                     │
+└─────────────────────────────────────┘`}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '6px' : '8px' }}>
+                {results.map(user => (
+                  <div 
+                    key={user.uid} 
+                    onClick={() => onSelectUser(user)}
+                    style={{ 
+                      cursor: 'pointer', 
+                      padding: isMobile ? '10px 12px' : '12px 16px',
+                      border: '1px solid #2a2e3a',
+                      transition: 'all 0.3s',
+                      background: '#000000'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#1a1e2a';
+                      e.currentTarget.style.borderColor = '#00ff9d';
+                      e.currentTarget.style.transform = isMobile ? 'none' : 'translateX(5px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#000000';
+                      e.currentTarget.style.borderColor = '#2a2e3a';
+                      e.currentTarget.style.transform = 'translateX(0)';
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold', color: '#00ff9d', fontSize: isMobile ? '12px' : '13px', wordBreak: 'break-all' }}>
+                      {user.name || user.email}
+                    </div>
+                    <div style={{ fontSize: isMobile ? '10px' : '11px', color: '#888', marginTop: 4, wordBreak: 'break-all' }}>
+                      {user.email}
+                    </div>
+                    <div style={{ fontSize: isMobile ? '9px' : '10px', color: '#666', marginTop: 6 }}>
+                      {'> SELECT_TO_CHAT'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}  
+--------------------------------------------------------------------------------  
+[FILE] src/components/Chat.tsx  
+--------------------------------------------------------------------------------  
+import { useState, useEffect, useRef } from 'react';
+import {
+  sendMessage,
+  listenMessages,
+  Message,
+  User,
+  updateChatInStorage,
+  incrementUnreadInStorage,
+  uploadImage,
+  sendImageMessage
+} from '../firebase';
+
+interface ChatProps {
+  otherUser: User;
+  currentUser: User;
+  isMobile?: boolean;
+  onBack?: () => void;
+}
+
+export default function Chat({ otherUser, currentUser, isMobile = false, onBack }: ChatProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const prevMessageCountRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!currentUser || !otherUser) return;
+
+    const unsubscribe = listenMessages(currentUser.uid, otherUser.uid, (newMessages) => {
+      // Проверяем, появилось ли новое сообщение
+      if (newMessages.length > prevMessageCountRef.current) {
+        const lastMessage = newMessages[newMessages.length - 1];
+        const isFromMe = lastMessage.fromId === currentUser.uid;
+        
+        // Обновляем список чатов в localStorage
+        updateChatInStorage(
+          currentUser.uid,
+          otherUser.uid,
+          otherUser.email,
+          otherUser.name,
+          lastMessage.text,
+          isFromMe
+        );
+
+        // Если сообщение не от нас, увеличиваем счётчик непрочитанных
+        if (!isFromMe && document.hidden) {
+          incrementUnreadInStorage(currentUser.uid, otherUser.uid);
+        }
+      }
+      setMessages(newMessages);
+      prevMessageCountRef.current = newMessages.length;
+    });
+
+    return () => unsubscribe();
+  }, [currentUser, otherUser]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!text.trim() || sending) return;
+
+    setSending(true);
+    try {
+      await sendMessage(
+        currentUser.uid,
+        otherUser.uid,
+        text
+      );
+      setText('');
+      inputRef.current?.focus();
+    } catch (error) {
+      console.error('Error sending message:', error);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+
+    setUploading(true);
+    try {
+      const imageUrl = await uploadImage(file, currentUser.uid, otherUser.uid);
+      await sendImageMessage(
+        currentUser.uid,
+        otherUser.uid,
+        imageUrl
+      );
+      // Очищаем input для возможности повторной загрузки того же файла
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
+  return (
+    <div style={{ 
+      border: '1px solid #00ff9d',
+      background: '#000000',
+      borderRadius: 0,
+      height: isMobile ? 'calc(100vh - 180px)' : '70vh',
+      display: 'flex', 
+      flexDirection: 'column'
+    }}>
+      <div style={{ 
+        background: '#1a1e2a',
+        padding: isMobile ? '10px 12px' : '12px 20px',
+        borderBottom: '1px solid #00ff9d',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ color: '#00ff9d', fontSize: isMobile ? '12px' : '14px' }}>
+            {'> CHAT_WITH: '}{otherUser.name || otherUser.email}
+          </div>
+          <div style={{ fontSize: isMobile ? '9px' : '10px', color: '#888', marginTop: 4 }}>
+            {otherUser.email} {'| STATUS: ONLINE'}
+          </div>
+        </div>
+        {isMobile && onBack && (
+          <button
+            onClick={onBack}
+            style={{
+              background: 'transparent',
+              color: '#00ff9d',
+              border: '1px solid #00ff9d',
+              borderRadius: 0,
+              padding: '4px 8px',
+              fontSize: '10px',
+              fontFamily: 'JetBrains Mono, monospace',
+              cursor: 'pointer'
+            }}
+          >
+            {'[ BACK ]'}
+          </button>
+        )}
+      </div>
+      
+      <div style={{ 
+        flex: 1, 
+        overflowY: 'auto', 
+        padding: isMobile ? '12px' : '20px',
+        background: '#000000'
+      }}>
+        {messages.length === 0 ? (
+          <div style={{ 
+            textAlign: 'center', 
+            color: '#666', 
+            padding: isMobile ? '20px' : '40px 20px',
+            fontSize: isMobile ? '10px' : '12px',
+            fontFamily: 'JetBrains Mono, monospace',
+            whiteSpace: 'pre',
+            overflowX: 'auto'
+          }}>
+            {`┌─────────────────────────────────────┐
+│                                     │
+│      > NO MESSAGES YET              │
+│                                     │
+│      Send a message to start        │
+│      the conversation               │
+│                                     │
+└─────────────────────────────────────┘`}
+          </div>
+        ) : (
+          messages.map((msg: Message, index: number) => {
+            const isOwn = msg.fromId === currentUser.uid;
+            return (
+              <div
+                key={msg.id || index}
+                style={{
+                  display: 'flex',
+                  justifyContent: isOwn ? 'flex-end' : 'flex-start',
+                  marginBottom: isMobile ? '12px' : '20px'
+                }}
+              >
+                <div style={{
+                  maxWidth: isMobile ? '85%' : '70%',
+                  background: isOwn ? '#1a3a2a' : '#1a1e2a',
+                  border: `1px solid ${isOwn ? '#00ff9d' : '#2a2e3a'}`,
+                  padding: isMobile ? '8px 12px' : '12px 16px',
+                  position: 'relative'
+                }}>
+                  {msg.imageUrl && (
+                    <div style={{ marginBottom: msg.text ? '8px' : 0 }}>
+                      <img
+                        src={msg.imageUrl}
+                        alt="Shared image"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: isMobile ? '200px' : '300px',
+                          display: 'block',
+                          borderRadius: 0,
+                          border: `1px solid ${isOwn ? '#00ff9d' : '#2a2e3a'}`
+                        }}
+                      />
+                    </div>
+                  )}
+                  {msg.text && (
+                    <div style={{
+                      fontSize: isMobile ? '11px' : '12px',
+                      lineHeight: 1.4,
+                      color: isOwn ? '#00ff9d' : '#cccccc',
+                      whiteSpace: 'pre-wrap',
+                      wordWrap: 'break-word'
+                    }}>
+                      {msg.text}
+                    </div>
+                  )}
+                  <div style={{
+                    fontSize: isMobile ? '8px' : '9px',
+                    marginTop: 6,
+                    color: '#666',
+                    textAlign: 'right'
+                  }}>
+                    {formatTime(msg.timestamp)}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+      
+      <div style={{
+        padding: isMobile ? '10px 12px' : '15px 20px',
+        borderTop: '1px solid #2a2e3a',
+        background: '#000000',
+        display: 'flex',
+        gap: isMobile ? '8px' : '10px'
+      }}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageSelect}
+          style={{ display: 'none' }}
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          title="Attach image"
+          style={{
+            padding: isMobile ? '10px 12px' : '12px 16px',
+            background: uploading ? '#2a2e3a' : '#1a1e2a',
+            color: uploading ? '#666' : '#00ff9d',
+            border: '1px solid #00ff9d',
+            borderRadius: 0,
+            fontSize: isMobile ? '10px' : '12px',
+            fontFamily: 'JetBrains Mono, monospace',
+            cursor: uploading ? 'not-allowed' : 'pointer',
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {uploading ? '[ ... ]' : '[ IMG ]'}
+        </button>
+        <div style={{ flex: 1, position: 'relative' }}>
+          <span style={{
+            position: 'absolute',
+            left: 12,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#00ff9d',
+            fontSize: isMobile ? '10px' : '12px',
+            opacity: 0.5
+          }}>
+            {'>'}
+          </span>
+          <input
+            ref={inputRef}
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="type your message..."
+            disabled={sending}
+            style={{
+              width: '100%',
+              padding: isMobile ? '10px 10px 10px 28px' : '12px 12px 12px 28px',
+              background: '#000000',
+              border: '1px solid #00ff9d',
+              borderRadius: 0,
+              fontSize: isMobile ? '11px' : '13px',
+              fontFamily: 'JetBrains Mono, monospace',
+              color: '#00ff9d'
+            }}
+          />
+        </div>
+        <button
+          onClick={handleSend}
+          disabled={sending || !text.trim()}
+          style={{
+            padding: isMobile ? '10px 16px' : '12px 32px',
+            background: sending || !text.trim() ? '#2a2e3a' : '#00ff9d',
+            color: sending || !text.trim() ? '#666' : '#000000',
+            border: 'none',
+            borderRadius: 0,
+            fontSize: isMobile ? '10px' : '12px',
+            fontFamily: 'JetBrains Mono, monospace',
+            cursor: (sending || !text.trim()) ? 'not-allowed' : 'pointer',
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {sending ? '[ SENDING ]' : '[ SEND ]'}
+        </button>
+      </div>
+    </div>
+  );
+}  
+--------------------------------------------------------------------------------  
+[FILE] src/components/ActiveChatsList.tsx  
+--------------------------------------------------------------------------------  
+import { useState, useEffect } from 'react';
+import {
+  LocalChat,
+  getChatsFromStorage,
+  resetUnreadInStorage,
+  getUserById,
+  User
+} from '../firebase';
+
+interface ActiveChatsListProps {
+  currentUserId: string;
+  onSelectChat: (user: User) => void;
+  isMobile?: boolean;
+}
+
+export default function ActiveChatsList({
+  currentUserId,
+  onSelectChat,
+  isMobile = false
+}: ActiveChatsListProps) {
+  const [chats, setChats] = useState<LocalChat[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Загружаем чаты из localStorage
+    const storedChats = getChatsFromStorage(currentUserId);
+    console.log('[ActiveChatsList] Загружены чаты из localStorage:', storedChats);
+    setChats(storedChats);
+    setLoading(false);
+
+    // Подписываемся на обновления localStorage (для синхронизации между вкладками)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === `messenger_chats_${currentUserId}` && e.newValue) {
+        try {
+          const newChats = JSON.parse(e.newValue);
+          console.log('[ActiveChatsList] Обновление из другой вкладки:', newChats);
+          setChats(newChats);
+        } catch (error) {
+          console.error('Parse storage error:', error);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [currentUserId]);
+
+  const handleChatSelect = async (chat: LocalChat) => {
+    // Сбрасываем счётчик непрочитанных
+    resetUnreadInStorage(currentUserId, chat.otherUserId);
+
+    const user = await getUserById(chat.otherUserId);
+    if (user) {
+      onSelectChat({
+        uid: user.uid,
+        email: user.email,
+        name: user.name
+      });
+    }
+
+    // Обновляем локально
+    setChats(prev => prev.map(c =>
+      c.otherUserId === chat.otherUserId ? { ...c, unreadCount: 0 } : c
+    ));
+  };
+
+  const formatTime = (timestamp?: number) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+
+    if (hours < 1) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (hours < 24) {
+      return `${hours}ч назад`;
+    } else {
+      return date.toLocaleDateString([], { day: 'numeric', month: 'numeric' });
+    }
+  };
+
+  const truncateMessage = (text: string, maxLength: number = 30) => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  const totalUnread = chats.reduce((sum, chat) => sum + chat.unreadCount, 0);
+
+  if (loading) {
+    return (
+      <div style={{
+        border: '1px solid #00ff9d',
+        background: '#000000',
+        borderRadius: 0,
+        padding: isMobile ? '15px' : '20px',
+        textAlign: 'center',
+        color: '#00ff9d',
+        fontSize: isMobile ? '10px' : '12px'
+      }}>
+        {'> LOADING CHATS...'}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      border: '1px solid #00ff9d',
+      background: '#000000',
+      borderRadius: 0,
+      overflow: 'hidden'
+    }}>
+      {/* Header */}
+      <div style={{
+        background: '#000000',
+        padding: isMobile ? '8px 12px' : '12px 20px',
+        borderBottom: '1px solid #00ff9d',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div style={{ color: '#00ff9d', fontSize: isMobile ? '12px' : '14px' }}>
+          {'> ACTIVE_CHATS'}
+        </div>
+        {totalUnread > 0 && (
+          <div style={{
+            background: '#ff4444',
+            color: '#000000',
+            padding: '2px 8px',
+            borderRadius: 0,
+            fontSize: isMobile ? '9px' : '10px',
+            fontFamily: 'JetBrains Mono, monospace',
+            fontWeight: 'bold'
+          }}>
+            {totalUnread}
+          </div>
+        )}
+      </div>
+
+      {/* Chat List */}
+      <div style={{
+        maxHeight: isMobile ? '30vh' : '40vh',
+        overflowY: 'auto'
+      }}>
+        {chats.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: isMobile ? '20px' : '30px 20px',
+            color: '#666',
+            fontSize: isMobile ? '10px' : '12px',
+            fontFamily: 'JetBrains Mono, monospace',
+            whiteSpace: 'pre'
+          }}>
+            {`┌─────────────────────────────────────┐
+│                                     │
+│      > NO ACTIVE CHATS              │
+│                                     │
+│      Start a conversation to see    │
+│      your chat list here            │
+│                                     │
+└─────────────────────────────────────┘`}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {chats.map((chat) => (
+              <div
+                key={chat.otherUserId}
+                onClick={() => handleChatSelect(chat)}
+                style={{
+                  padding: isMobile ? '10px 12px' : '12px 16px',
+                  borderBottom: '1px solid #1a1e2a',
+                  borderLeft: chat.unreadCount > 0 ? '3px solid #00ff9d' : '3px solid transparent',
+                  background: '#000000',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                  position: 'relative'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#1a1e2a';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#000000';
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start'
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      color: chat.unreadCount > 0 ? '#00ff9d' : '#888',
+                      fontSize: isMobile ? '11px' : '12px',
+                      fontWeight: chat.unreadCount > 0 ? 'bold' : 'normal',
+                      wordBreak: 'break-all'
+                    }}>
+                      {chat.otherUserName || chat.otherUserEmail}
+                    </div>
+                    {chat.lastMessage && (
+                      <div style={{
+                        color: '#666',
+                        fontSize: isMobile ? '9px' : '10px',
+                        marginTop: 4,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {truncateMessage(chat.lastMessage)}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    gap: 4,
+                    minWidth: 50
+                  }}>
+                    {formatTime(chat.lastMessageTime) && (
+                      <div style={{
+                        color: '#666',
+                        fontSize: isMobile ? '8px' : '9px'
+                      }}>
+                        {formatTime(chat.lastMessageTime)}
+                      </div>
+                    )}
+                    {chat.unreadCount > 0 && (
+                      <div style={{
+                        background: '#00ff9d',
+                        color: '#000000',
+                        padding: '1px 6px',
+                        borderRadius: 0,
+                        fontSize: isMobile ? '8px' : '9px',
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontWeight: 'bold'
+                      }}>
+                        {chat.unreadCount}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+  
+--------------------------------------------------------------------------------  
+[FILE] src/components/Notifications.tsx  
+--------------------------------------------------------------------------------  
+import { useState, useEffect, useRef } from 'react';
+import { User, getChatsFromStorage } from '../firebase';
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: number;
+  type: 'message' | 'system';
+}
+
+interface NotificationsProps {
+  currentUserId: string;
+  isMobile?: boolean;
+  onNotificationClick?: (user: User) => void;
+}
+
+export default function Notifications({
+  currentUserId,
+  isMobile = false,
+  onNotificationClick
+}: NotificationsProps) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [totalUnread, setTotalUnread] = useState(0);
+  const prevChatsRef = useRef<{ [key: string]: number }>({});
+
+  // Инициализация уведомлений браузера
+  useEffect(() => {
+    // Запрашиваем разрешение на уведомления браузера
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Воспроизведение звука уведомления
+  const playNotificationSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.15);
+    } catch (error) {
+      console.log('Audio notification error:', error);
+    }
+  };
+
+  // Показ браузерного уведомления
+  const showBrowserNotification = (title: string, body: string) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body,
+        icon: '/favicon.svg',
+        badge: '/favicon.svg',
+        requireInteraction: false,
+        tag: 'messenger-notification'
+      });
+    }
+  };
+
+  // Слушаем изменения в localStorage
+  useEffect(() => {
+    const updateUnreadCount = () => {
+      const chats = getChatsFromStorage(currentUserId);
+      const total = chats.reduce((sum, chat) => sum + chat.unreadCount, 0);
+      setTotalUnread(total);
+
+      // Проверяем новые непрочитанные сообщения
+      chats.forEach(chat => {
+        const prevUnread = prevChatsRef.current[chat.otherUserId] || 0;
+        
+        if (chat.unreadCount > prevUnread && chat.unreadCount > 0 && chat.lastMessage) {
+          const userName = chat.otherUserName || chat.otherUserEmail;
+          
+          const notification: Notification = {
+            id: `${chat.otherUserId}_${Date.now()}`,
+            title: 'Новое сообщение',
+            message: `${userName}: ${chat.lastMessage}`,
+            timestamp: Date.now(),
+            type: 'message'
+          };
+          
+          // Добавляем уведомление
+          setNotifications(prev => [notification, ...prev].slice(0, 10));
+          
+          // Воспроизводим звук
+          playNotificationSound();
+          
+          // Показываем браузерное уведомление
+          showBrowserNotification('Новое сообщение', `${userName}: ${chat.lastMessage}`);
+        }
+      });
+
+      // Сохраняем текущие значения для следующего сравнения
+      chats.forEach(chat => {
+        prevChatsRef.current[chat.otherUserId] = chat.unreadCount;
+      });
+    };
+
+    // Первоначальная загрузка
+    updateUnreadCount();
+
+    // Подписка на изменения localStorage
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === `messenger_chats_${currentUserId}`) {
+        updateUnreadCount();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    // Периодическая проверка (на случай если изменения в той же вкладке)
+    const interval = setInterval(updateUnreadCount, 2000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [currentUserId, onNotificationClick]);
+
+  const clearNotifications = () => {
+    setNotifications([]);
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    if (onNotificationClick) {
+      // Извлекаем userId из notification
+      const parts = notification.message.split(':');
+      const userNameOrEmail = parts[0];
+      const user = await getUserByDisplayName(userNameOrEmail);
+      if (user) {
+        onNotificationClick(user);
+      }
+    }
+    // Удаляем уведомление после клика
+    setNotifications(prev => prev.filter(n => n.id !== notification.id));
+  };
+
+  const getUserByDisplayName = async (displayName: string): Promise<User | null> => {
+    const { getAllUsers } = await import('../firebase');
+    const users = await getAllUsers();
+    const user = users.find(u => u.name === displayName || u.email === displayName);
+    return user || null;
+  };
+
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: isMobile ? '10px' : '20px',
+      right: isMobile ? '10px' : '20px',
+      zIndex: 1000
+    }}>
+      {/* Кнопка уведомлений */}
+      <button
+        onClick={() => setShowNotifications(!showNotifications)}
+        style={{
+          width: isMobile ? 45 : 50,
+          height: isMobile ? 45 : 50,
+          borderRadius: '50%',
+          background: '#000000',
+          border: '2px solid #00ff9d',
+          color: '#00ff9d',
+          fontSize: isMobile ? '16px' : '18px',
+          fontFamily: 'JetBrains Mono, monospace',
+          cursor: 'pointer',
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s',
+          boxShadow: '0 0 10px rgba(0, 255, 157, 0.3)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 255, 157, 0.5)';
+          e.currentTarget.style.transform = 'scale(1.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = '0 0 10px rgba(0, 255, 157, 0.3)';
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+      >
+        🔔
+        {totalUnread > 0 && (
+          <div style={{
+            position: 'absolute',
+            top: -5,
+            right: -5,
+            background: '#ff4444',
+            color: '#000000',
+            borderRadius: '50%',
+            width: 20,
+            height: 20,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: isMobile ? '9px' : '10px',
+            fontFamily: 'JetBrains Mono, monospace',
+            fontWeight: 'bold',
+            border: '2px solid #000000'
+          }}>
+            {totalUnread > 99 ? '99+' : totalUnread}
+          </div>
+        )}
+      </button>
+
+      {/* Панель уведомлений */}
+      {showNotifications && (
+        <div style={{
+          position: 'absolute',
+          bottom: isMobile ? 55 : 60,
+          right: 0,
+          width: isMobile ? 280 : 320,
+          maxHeight: isMobile ? '40vh' : 400,
+          overflowY: 'auto',
+          background: '#000000',
+          border: '1px solid #00ff9d',
+          borderRadius: 0,
+          boxShadow: '0 0 20px rgba(0, 255, 157, 0.2)'
+        }}>
+          {/* Header */}
+          <div style={{
+            padding: isMobile ? '10px 12px' : '12px 16px',
+            borderBottom: '1px solid #00ff9d',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <div style={{
+              color: '#00ff9d',
+              fontSize: isMobile ? '11px' : '12px',
+              fontFamily: 'JetBrains Mono, monospace'
+            }}>
+              {'> NOTIFICATIONS'}
+              {totalUnread > 0 && (
+                <span style={{ marginLeft: 8, color: '#ff4444' }}>
+                  ({totalUnread} new)
+                </span>
+              )}
+            </div>
+            <button
+              onClick={clearNotifications}
+              style={{
+                background: 'transparent',
+                color: '#ff4444',
+                border: '1px solid #ff4444',
+                borderRadius: 0,
+                padding: '4px 8px',
+                fontSize: isMobile ? '8px' : '9px',
+                fontFamily: 'JetBrains Mono, monospace',
+                cursor: 'pointer'
+              }}
+            >
+              {'[CLEAR]'}
+            </button>
+          </div>
+
+          {/* Список уведомлений */}
+          <div>
+            {notifications.length === 0 ? (
+              <div style={{
+                padding: isMobile ? '20px' : '30px 20px',
+                textAlign: 'center',
+                color: '#666',
+                fontSize: isMobile ? '10px' : '11px',
+                fontFamily: 'JetBrains Mono, monospace'
+              }}>
+                {'> NO NEW NOTIFICATIONS'}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification)}
+                    style={{
+                      padding: isMobile ? '10px 12px' : '12px 16px',
+                      borderBottom: '1px solid #1a1e2a',
+                      borderLeft: '3px solid #00ff9d',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#1a1e2a';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#000000';
+                    }}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      marginBottom: 4
+                    }}>
+                      <div style={{
+                        color: '#00ff9d',
+                        fontSize: isMobile ? '10px' : '11px',
+                        fontWeight: 'bold'
+                      }}>
+                        {notification.title}
+                      </div>
+                      <div style={{
+                        color: '#666',
+                        fontSize: isMobile ? '8px' : '9px'
+                      }}>
+                        {formatTime(notification.timestamp)}
+                      </div>
+                    </div>
+                    <div style={{
+                      color: '#888',
+                      fontSize: isMobile ? '9px' : '10px',
+                      wordBreak: 'break-word'
+                    }}>
+                      {notification.message}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+  
+--------------------------------------------------------------------------------  
+[FILE] src/components/UsersList.tsx  
+--------------------------------------------------------------------------------  
+(䠩� ���⮩)  
+  
+--------------------------------------------------------------------------------  
+[FILE] public/favicon.svg  
+--------------------------------------------------------------------------------  
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="46" fill="none" viewBox="0 0 48 46"><path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" style="fill:#863bff;fill:color(display-p3 .5252 .23 1);fill-opacity:1"/><mask id="a" width="48" height="46" x="0" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M25.842 44.938c-.664.844-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.183c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.498 0-3.579-1.842-3.579H1.133c-.92 0-1.456-1.04-.92-1.787L9.91.473c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.578 1.842 3.578h11.377c.943 0 1.473 1.088.89 1.832L25.843 44.94z" style="fill:#000;fill-opacity:1"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#ede6ff" rx="5.508" ry="14.704" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -4.47 31.516)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#ede6ff" rx="10.399" ry="29.851" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -39.328 7.883)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#7e14ff" rx="5.508" ry="30.487" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -25.913 -14.639)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -32.644 -3.334)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -34.34 30.47)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#ede6ff" rx="14.072" ry="22.078" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="rotate(93.35 24.506 48.493)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx=".387" cy="8.972" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(39.51 .387 8.972)"/></g><g filter="url(#k)"><ellipse cx="47.523" cy="-6.092" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 47.523 -6.092)"/></g><g filter="url(#l)"><ellipse cx="41.412" cy="6.333" fill="#47bfff" rx="5.971" ry="9.665" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 41.412 6.333)"/></g><g filter="url(#m)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#n)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#o)"><ellipse cx="35.651" cy="29.907" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 35.651 29.907)"/></g><g filter="url(#p)"><ellipse cx="38.418" cy="32.4" fill="#47bfff" rx="5.971" ry="15.297" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 38.418 32.4)"/></g></g><defs><filter id="b" width="60.045" height="41.654" x="-19.77" y="16.149" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-54.613" y="-7.533" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-49.64" y="2.03" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-45.045" y="20.029" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-43.513" y="21.178" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="15.756" y="-17.901" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-27.636" y="-22.853" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="20.116" y="-38.415" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="24.641" y="-11.323" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="8.244" y="-2.416" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="18.713" y="10.588" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter></defs></svg>  
+--------------------------------------------------------------------------------  
+[FILE] public/icons.svg  
+--------------------------------------------------------------------------------  
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="bluesky-icon" viewBox="0 0 16 17">
+    <g clip-path="url(#bluesky-clip)"><path fill="#08060d" d="M7.75 7.735c-.693-1.348-2.58-3.86-4.334-5.097-1.68-1.187-2.32-.981-2.74-.79C.188 2.065.1 2.812.1 3.251s.241 3.602.398 4.13c.52 1.744 2.367 2.333 4.07 2.145-2.495.37-4.71 1.278-1.805 4.512 3.196 3.309 4.38-.71 4.987-2.746.608 2.036 1.307 5.91 4.93 2.746 2.72-2.746.747-4.143-1.747-4.512 1.702.189 3.55-.4 4.07-2.145.156-.528.397-3.691.397-4.13s-.088-1.186-.575-1.406c-.42-.19-1.06-.395-2.741.79-1.755 1.24-3.64 3.752-4.334 5.099"/></g>
+    <defs><clipPath id="bluesky-clip"><path fill="#fff" d="M.1.85h15.3v15.3H.1z"/></clipPath></defs>
+  </symbol>
+  <symbol id="discord-icon" viewBox="0 0 20 19">
+    <path fill="#08060d" d="M16.224 3.768a14.5 14.5 0 0 0-3.67-1.153c-.158.286-.343.67-.47.976a13.5 13.5 0 0 0-4.067 0c-.128-.306-.317-.69-.476-.976A14.4 14.4 0 0 0 3.868 3.77C1.546 7.28.916 10.703 1.231 14.077a14.7 14.7 0 0 0 4.5 2.306q.545-.748.965-1.587a9.5 9.5 0 0 1-1.518-.74q.191-.14.372-.293c2.927 1.369 6.107 1.369 8.999 0q.183.152.372.294-.723.437-1.52.74.418.838.963 1.588a14.6 14.6 0 0 0 4.504-2.308c.37-3.911-.63-7.302-2.644-10.309m-9.13 8.234c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.894 0 1.614.82 1.599 1.82.001 1-.705 1.82-1.6 1.82m5.91 0c-.878 0-1.599-.82-1.599-1.82 0-.998.705-1.82 1.6-1.82.893 0 1.614.82 1.599 1.82 0 1-.706 1.82-1.6 1.82"/>
+  </symbol>
+  <symbol id="documentation-icon" viewBox="0 0 21 20">
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="m15.5 13.333 1.533 1.322c.645.555.967.833.967 1.178s-.322.623-.967 1.179L15.5 18.333m-3.333-5-1.534 1.322c-.644.555-.966.833-.966 1.178s.322.623.966 1.179l1.534 1.321"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M17.167 10.836v-4.32c0-1.41 0-2.117-.224-2.68-.359-.906-1.118-1.621-2.08-1.96-.599-.21-1.349-.21-2.848-.21-2.623 0-3.935 0-4.983.369-1.684.591-3.013 1.842-3.641 3.428C3 6.449 3 7.684 3 10.154v2.122c0 2.558 0 3.838.706 4.726q.306.383.713.671c.76.536 1.79.64 3.581.66"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M3 10a2.78 2.78 0 0 1 2.778-2.778c.555 0 1.209.097 1.748-.047.48-.129.854-.503.982-.982.145-.54.048-1.194.048-1.749a2.78 2.78 0 0 1 2.777-2.777"/>
+  </symbol>
+  <symbol id="github-icon" viewBox="0 0 19 19">
+    <path fill="#08060d" fill-rule="evenodd" d="M9.356 1.85C5.05 1.85 1.57 5.356 1.57 9.694a7.84 7.84 0 0 0 5.324 7.44c.387.079.528-.168.528-.376 0-.182-.013-.805-.013-1.454-2.165.467-2.616-.935-2.616-.935-.349-.91-.864-1.143-.864-1.143-.71-.48.051-.48.051-.48.787.051 1.2.805 1.2.805.695 1.194 1.817.857 2.268.649.064-.507.27-.857.49-1.052-1.728-.182-3.545-.857-3.545-3.87 0-.857.31-1.558.8-2.104-.078-.195-.349-1 .077-2.078 0 0 .657-.208 2.14.805a7.5 7.5 0 0 1 1.946-.26c.657 0 1.328.092 1.946.26 1.483-1.013 2.14-.805 2.14-.805.426 1.078.155 1.883.078 2.078.502.546.799 1.247.799 2.104 0 3.013-1.818 3.675-3.558 3.87.284.247.528.714.528 1.454 0 1.052-.012 1.896-.012 2.156 0 .208.142.455.528.377a7.84 7.84 0 0 0 5.324-7.441c.013-4.338-3.48-7.844-7.773-7.844" clip-rule="evenodd"/>
+  </symbol>
+  <symbol id="social-icon" viewBox="0 0 20 20">
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M12.5 6.667a4.167 4.167 0 1 0-8.334 0 4.167 4.167 0 0 0 8.334 0"/>
+    <path fill="none" stroke="#aa3bff" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M2.5 16.667a5.833 5.833 0 0 1 8.75-5.053m3.837.474.513 1.035c.07.144.257.282.414.309l.93.155c.596.1.736.536.307.965l-.723.73a.64.64 0 0 0-.152.531l.207.903c.164.715-.213.991-.84.618l-.872-.52a.63.63 0 0 0-.577 0l-.872.52c-.624.373-1.003.094-.84-.618l.207-.903a.64.64 0 0 0-.152-.532l-.723-.729c-.426-.43-.289-.864.306-.964l.93-.156a.64.64 0 0 0 .412-.31l.513-1.034c.28-.562.735-.562 1.012 0"/>
+  </symbol>
+  <symbol id="x-icon" viewBox="0 0 19 19">
+    <path fill="#08060d" fill-rule="evenodd" d="M1.893 1.98c.052.072 1.245 1.769 2.653 3.77l2.892 4.114c.183.261.333.48.333.486s-.068.089-.152.183l-.522.593-.765.867-3.597 4.087c-.375.426-.734.834-.798.905a1 1 0 0 0-.118.148c0 .01.236.017.664.017h.663l.729-.83c.4-.457.796-.906.879-.999a692 692 0 0 0 1.794-2.038c.034-.037.301-.34.594-.675l.551-.624.345-.392a7 7 0 0 1 .34-.374c.006 0 .93 1.306 2.052 2.903l2.084 2.965.045.063h2.275c1.87 0 2.273-.003 2.266-.021-.008-.02-1.098-1.572-3.894-5.547-2.013-2.862-2.28-3.246-2.273-3.266.008-.019.282-.332 2.085-2.38l2-2.274 1.567-1.782c.022-.028-.016-.03-.65-.03h-.674l-.3.342a871 871 0 0 1-1.782 2.025c-.067.075-.405.458-.75.852a100 100 0 0 1-.803.91c-.148.172-.299.344-.99 1.127-.304.343-.32.358-.345.327-.015-.019-.904-1.282-1.976-2.808L6.365 1.85H1.8zm1.782.91 8.078 11.294c.772 1.08 1.413 1.973 1.425 1.984.016.017.241.02 1.05.017l1.03-.004-2.694-3.766L7.796 5.75 5.722 2.852l-1.039-.004-1.039-.004z" clip-rule="evenodd"/>
+  </symbol>
+</svg>
+  
+================================================================================  
+                        ����� �����  
+================================================================================ 
