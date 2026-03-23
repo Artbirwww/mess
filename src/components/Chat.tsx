@@ -8,6 +8,10 @@ import {
   incrementUnreadInStorage,
   uploadImage,
   sendImageMessage,
+  uploadFile,
+  sendFileMessage,
+  getFileIcon,
+  formatFileSize,
   deleteMessage,
   editMessage,
   deleteMessages
@@ -59,6 +63,7 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputGeneralRef = useRef<HTMLInputElement>(null);
   const prevMessageCountRef = useRef<number>(0);
   const chatId = [currentUser.uid, otherUser.uid].sort().join('_');
   const editInputRef = useRef<HTMLInputElement>(null);
@@ -299,6 +304,31 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const { url: fileUrl, resourceType } = await uploadFile(file, currentUser.uid, otherUser.uid);
+      await sendFileMessage(
+        currentUser.uid,
+        otherUser.uid,
+        fileUrl,
+        file.name,
+        file.type || 'application/octet-stream',
+        file.size
+      );
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -427,6 +457,24 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
                         />
                       </div>
                     )}
+                    {msg.fileUrl && (
+                      <div className="chat-message-file">
+                        <a
+                          href={msg.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="chat-file-link"
+                        >
+                          <span className="chat-file-icon">{getFileIcon(msg.fileType || '', msg.fileName)}</span>
+                          <div className="chat-file-info">
+                            <span className="chat-file-name">{msg.fileName || 'File'}</span>
+                            {msg.fileSize && (
+                              <span className="chat-file-size">{formatFileSize(msg.fileSize)}</span>
+                            )}
+                          </div>
+                        </a>
+                      </div>
+                    )}
                     {msg.text && (
                       <div className="chat-message-text">
                         {msg.text}
@@ -455,6 +503,13 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
           onChange={handleImageSelect}
           style={{ display: 'none' }}
         />
+        <input
+          ref={fileInputGeneralRef}
+          type="file"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+          id="file-input-general"
+        />
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
@@ -462,6 +517,14 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
           title="Attach image"
         >
           {uploading ? '[ ... ]' : '[ IMG ]'}
+        </button>
+        <button
+          onClick={() => fileInputGeneralRef.current?.click()}
+          disabled={uploading}
+          className="chat-btn"
+          title="Attach file"
+        >
+          {uploading ? '[ ... ]' : '[ FILE ]'}
         </button>
         <div className="chat-input-wrapper">
           {replyTo && (

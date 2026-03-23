@@ -49,6 +49,10 @@ export interface Message {
   toId: string;
   timestamp: number;
   imageUrl?: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
+  fileSize?: number;
   editedAt?: number;
   replyTo?: {
     messageId: string;
@@ -591,6 +595,107 @@ export const sendImageMessage = async (
   } catch (error) {
     console.error('Send image error:', error);
   }
+};
+
+// Загрузить файл на Cloudinary
+export const uploadFile = async (
+  file: File,
+  fromId: string,
+  toId: string
+): Promise<{ url: string; resourceType: string }> => {
+  try {
+    const { uploadFileToCloudinary } = await import('./lib/cloudinary');
+    const result = await uploadFileToCloudinary(file, fromId, toId);
+    return result;
+  } catch (error) {
+    console.error('Upload file error:', error);
+    throw error;
+  }
+};
+
+// Отправить сообщение с файлом
+export const sendFileMessage = async (
+  fromId: string,
+  toId: string,
+  fileUrl: string,
+  fileName: string,
+  fileType: string,
+  fileSize: number
+) => {
+  try {
+    const chatId = [fromId, toId].sort().join('_');
+    await addDoc(collection(db, 'chats', chatId, 'messages'), {
+      text: '',
+      fileUrl,
+      fileName,
+      fileType,
+      fileSize,
+      fromId,
+      toId,
+      timestamp: Date.now(),
+    });
+
+    // Обновляем localStorage для отправителя
+    const toUser = await getUserById(toId);
+    updateChatInStorage(
+      fromId,
+      toId,
+      toUser?.email || toId,
+      toUser?.name,
+      `📎 ${fileName}`,
+      true
+    );
+
+    // Обновляем localStorage для получателя
+    const fromUser = await getUserById(fromId);
+    updateChatInStorage(
+      toId,
+      fromId,
+      fromUser?.email || fromId,
+      fromUser?.name,
+      `📎 ${fileName}`,
+      false
+    );
+  } catch (error) {
+    console.error('Send file error:', error);
+  }
+};
+
+// Получить иконку для типа файла
+export const getFileIcon = (fileType: string, fileName?: string): string => {
+  if (fileType.startsWith('image/')) return '🖼️';
+  if (fileType.startsWith('video/')) return '🎬';
+  if (fileType.startsWith('audio/')) return '🎵';
+  if (fileType.includes('pdf')) return '📄';
+  if (fileType.includes('word') || fileType.includes('document')) return '📝';
+  if (fileType.includes('excel') || fileType.includes('spreadsheet')) return '📊';
+  if (fileType.includes('powerpoint') || fileType.includes('presentation')) return '📊';
+  if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('archive')) return '📦';
+  if (fileType.includes('text')) return '📃';
+  if (fileType.includes('javascript') || fileType.includes('code')) return '💻';
+  
+  // По расширению файла
+  if (fileName) {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return '📄';
+    if (ext === 'doc' || ext === 'docx') return '📝';
+    if (ext === 'xls' || ext === 'xlsx') return '📊';
+    if (ext === 'ppt' || ext === 'pptx') return '📊';
+    if (ext === 'zip' || ext === 'rar' || ext === '7z') return '📦';
+    if (ext === 'mp3' || ext === 'wav' || ext === 'ogg') return '🎵';
+    if (ext === 'mp4' || ext === 'avi' || ext === 'mov' || ext === 'webm') return '🎬';
+  }
+  
+  return '📎';
+};
+
+// Форматировать размер файла
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 };
 
 // Удалить сообщение

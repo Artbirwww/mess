@@ -1,12 +1,13 @@
 # Firebase Messenger 💬
 
-Мессенджер в терминальном стиле с поддержкой обмена изображениями через Cloudinary.
+Мессенджер в терминальном стиле с поддержкой обмена файлами через Cloudinary.
 
 ## Особенности
 
 - 🔐 Аутентификация через Firebase
 - 💬 Обмен сообщениями в реальном времени
-- 🖼️ Отправка изображений через Cloudinary
+- 🖼️ Отправка изображений (JPG, PNG, GIF, WebP)
+- 📎 Отправка файлов любого типа (документы, видео, аудио, архивы)
 - 📱 Адаптивный дизайн для ПК и мобильных
 - 🔔 Уведомления о новых сообщениях
 - 📋 Список активных чатов
@@ -27,13 +28,24 @@ npm install
 3. Создайте **Firestore Database**
 4. Скопируйте конфигурацию из проекта
 
-### 3. Настройка Cloudinary (для изображений)
+### 3. Настройка Cloudinary (для файлов)
 
 1. Зарегистрируйтесь на [Cloudinary](https://cloudinary.com/)
 2. Создайте **Upload Preset** с режимом **Unsigned**
 3. Получите **Cloud Name**
 
 Подробная инструкция в [CLOUDINARY_SETUP.md](./CLOUDINARY_SETUP.md)
+
+**Поддерживаемые типы файлов:**
+
+| Тип | Форматы | Endpoint |
+|-----|---------|----------|
+| 🖼️ Изображения | JPG, PNG, GIF, WebP, SVG, BMP | `image/upload` |
+| 🎬 Видео | MP4, AVI, MOV, WebM, MKV | `video/upload` |
+| 🎵 Аудио | MP3, WAV, OGG, FLAC | `video/upload` |
+| 📄 Документы | PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX | `raw/upload` |
+| 📦 Архивы | ZIP, RAR, 7Z, TAR, GZ | `raw/upload` |
+| 💻 Код | JS, TS, JSX, TSX, JSON, CSS, HTML | `raw/upload` |
 
 ### 4. Создание файла .env
 
@@ -73,7 +85,7 @@ npm run dev
 - **React 18** + TypeScript
 - **Vite** — сборка
 - **Firebase** — Auth, Firestore
-- **Cloudinary** — хранение изображений
+- **Cloudinary** — хранение файлов (изображения, видео, аудио, документы)
 
 ## Структура проекта
 
@@ -86,8 +98,8 @@ src/
 │   ├── ActiveChatsList.tsx  # Список чатов
 │   └── Notifications.tsx    # Уведомления
 ├── lib/
-│   └── cloudinary.ts    # Интеграция с Cloudinary
-├── firebase.ts          # Firebase конфигурация
+│   └── cloudinary.ts    # Интеграция с Cloudinary (все типы файлов)
+├── firebase.ts          # Firebase конфигурация + функции сообщений
 ├── App.tsx              # Главный компонент
 └── main.tsx             # Точка входа
 ```
@@ -133,6 +145,8 @@ service cloud.firestore {
 - 25 GB хранилища
 - 25 GB трафика/мес
 - 25 000 трансформаций/мес
+
+**Примечание:** Для загрузки файлов используется тот же upload preset, что и для изображений. Cloudinary автоматически определяет тип файла и сохраняет его в соответствующей категории.
 
 ## Лицензия
 

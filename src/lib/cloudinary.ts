@@ -15,7 +15,30 @@ export interface CloudinaryUploadResponse {
   url: string;
   public_id: string;
   format: string;
+  resource_type: string;
+  bytes: number;
 }
+
+export type FileResourceType = 'image' | 'video' | 'raw' | 'auto';
+
+/**
+ * Определение типа ресурса на основе MIME-типа файла
+ */
+export const getResourceType = (file: File): FileResourceType => {
+  const mimeType = file.type.toLowerCase();
+
+  if (mimeType.startsWith('image/')) {
+    return 'image';
+  }
+  if (mimeType.startsWith('video/')) {
+    return 'video';
+  }
+  if (mimeType.startsWith('audio/')) {
+    return 'video'; // Cloudinary хранит аудио в video/
+  }
+  // Документы, архивы и другие файлы
+  return 'raw';
+};
 
 /**
  * Загрузка изображения на Cloudinary
@@ -55,6 +78,54 @@ export const uploadImageToCloudinary = async (
     return data.secure_url;
   } catch (error) {
     console.error('❌ Cloudinary upload error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Загрузка любого файла на Cloudinary (изображения, видео, аудио, документы)
+ * Использует unsigned upload preset (не требует подписи на сервере)
+ */
+export const uploadFileToCloudinary = async (
+  file: File,
+  fromId: string,
+  toId: string
+): Promise<{ url: string; resourceType: FileResourceType }> => {
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+    throw new Error('Cloudinary не настроен. Проверьте переменные окружения.');
+  }
+
+  const resourceType = getResourceType(file);
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', `messenger/${fromId}_${toId}`);
+  formData.append('tags', `messenger,chat,${fromId},${toId}`);
+
+  // Cloudinary endpoint в зависимости от типа ресурса
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || `Ошибка загрузки файла (${resourceType})`);
+    }
+
+    const data: CloudinaryUploadResponse = await response.json();
+    console.log(`✅ Cloudinary ${resourceType} upload success:`, data.secure_url);
+
+    return {
+      url: data.secure_url,
+      resourceType
+    };
+  } catch (error) {
+    console.error(`❌ Cloudinary ${resourceType} upload error:`, error);
     throw error;
   }
 };
