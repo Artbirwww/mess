@@ -79,11 +79,13 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
   const [isDragOver, setIsDragOver] = useState(false);
   const [chatBackground, setChatBackground] = useState<ChatBackground | null>(null);
   const [showBackgroundModal, setShowBackgroundModal] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileInputGeneralRef = useRef<HTMLInputElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
   const chatId = [currentUser.uid, otherUser.uid].sort().join('_');
   const editInputRef = useRef<HTMLInputElement>(null);
@@ -129,6 +131,24 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      setShowScrollButton(!isNearBottom);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   // Закрытие контекстного меню при клике
   useEffect(() => {
@@ -712,7 +732,7 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
         </div>
       )}
 
-      <div className="chat-messages">
+      <div className="chat-messages" ref={messagesContainerRef}>
         {messages.length === 0 ? (
           <div className="chat-empty-state">
             <pre>
@@ -864,6 +884,16 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
           </>
         )}
       </div>
+
+      {showScrollButton && (
+        <button
+          onClick={scrollToBottom}
+          className="chat-scroll-button"
+          title="Scroll to bottom"
+        >
+          ↓
+        </button>
+      )}
 
       <div className="chat-input-area">
         <input

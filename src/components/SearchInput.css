@@ -1,0 +1,125 @@
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+}
+
+.search-input-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-full);
+  padding: var(--spacing-sm) var(--spacing-md);
+  transition: all var(--transition-normal);
+}
+
+.search-input-group:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  background: var(--bg-tertiary);
+}
+
+.search-icon {
+  font-size: var(--font-size-md);
+  opacity: 0.6;
+}
+
+.header-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-xs) 0;
+}
+
+.header-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-loading {
+  font-size: var(--font-size-sm);
+  animation: pulse-glow 1s ease-in-out infinite;
+}
+
+/* Dropdown */
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + var(--spacing-sm));
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  overflow: hidden;
+  animation: slide-down 0.2s var(--transition-normal);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.search-dropdown-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-dropdown-item {
+  padding: var(--spacing-md) var(--spacing-lg);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.search-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.search-dropdown-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.search-dropdown-item-name {
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.search-dropdown-item-email {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+.search-dropdown-empty {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .search-input-wrapper {
+    max-width: none;
+  }
+
+  .header-search-input {
+    font-size: var(--font-size-xs);
+  }
+
+  .search-dropdown {
+    position: fixed;
+    top: auto;
+    left: var(--spacing-md);
+    right: var(--spacing-md);
+    max-height: 50vh;
+  }
+}

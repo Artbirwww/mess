@@ -523,6 +523,39 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
+/* Кнопка прокрутки вниз */
+.chat-scroll-button {
+  position: absolute;
+  bottom: calc(var(--spacing-xl) + 70px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  border: none;
+  color: white;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg), var(--shadow-glow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-normal);
+  z-index: 50;
+  animation: scale-in 0.3s var(--transition-bounce);
+}
+
+.chat-scroll-button:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: var(--shadow-xl), var(--shadow-glow);
+}
+
+.chat-scroll-button:active {
+  transform: translateX(-50%) translateY(0) scale(0.95);
+}
+
 .chat-input-area {
   padding: var(--spacing-lg) var(--spacing-xl);
   border-top: 1px solid var(--border-secondary);

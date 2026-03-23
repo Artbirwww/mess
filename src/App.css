@@ -23,6 +23,10 @@
   max-width: 1800px;
   margin: 0 auto;
   padding: 0;
+  height: calc(100vh - 2 * var(--spacing-xl));
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
 }
 
 /* Хедер */
@@ -30,10 +34,12 @@
   background: var(--bg-card);
   border: 1px solid var(--border-secondary);
   border-radius: var(--radius-xl);
-  margin-bottom: var(--spacing-xl);
-  overflow: hidden;
+  margin-bottom: var(--spacing-lg);
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(10px);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
 }
 
 .messenger-header-content {
@@ -44,6 +50,8 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--spacing-md);
+  overflow: visible;
+  border-radius: var(--radius-xl);
 }
 
 .user-info {
@@ -81,73 +89,79 @@
   align-items: center;
 }
 
-/* Мобильная навигация */
-.mobile-nav {
-  margin-bottom: var(--spacing-md);
+.header-content-center {
   display: flex;
-  gap: var(--spacing-sm);
-}
-
-.mobile-nav-btn {
+  align-items: center;
+  gap: var(--spacing-md);
   flex: 1;
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  text-align: center;
-  transition: all var(--transition-normal);
+  justify-content: center;
 }
 
-.mobile-nav-btn:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--border-primary);
-}
-
-/* Основной layout */
+/* Основной layout - Telegram style */
 .messenger-main {
   display: flex;
-  flex-direction: row;
-  gap: var(--spacing-xl);
+  flex: 1;
+  gap: var(--spacing-lg);
+  overflow: hidden;
 }
 
-/* Панели */
-.panel {
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
   background: var(--bg-card);
   border: 1px solid var(--border-secondary);
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: var(--shadow-md);
-  transition: all var(--transition-normal);
+  height: 100%;
 }
 
-.panel:hover {
-  border-color: var(--border-primary);
-  box-shadow: var(--shadow-lg);
+.sidebar-chats {
+  flex: 1;
+  overflow-y: auto;
 }
 
-.panel-search {
+.sidebar-chats .chats-list-container {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  height: 100%;
+}
+
+/* Chat Area */
+.chat-area {
   flex: 1;
   min-width: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.panel-chats {
-  width: var(--sidebar-width);
-  flex-shrink: 0;
+.chat-area .chat-container {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  height: 100%;
 }
 
-.panel-chat {
-  flex: 2;
-  min-width: 0;
+.chat-area .empty-state {
+  padding: var(--spacing-xl);
 }
 
 /* Пустое состояние */
 .empty-state {
-  border: 1px dashed var(--border-secondary);
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
+  border: none;
+  background: transparent;
+  border-radius: 0;
   padding: var(--spacing-2xl);
   text-align: center;
   color: var(--text-muted);
@@ -155,7 +169,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
+  height: 100%;
+  min-height: auto;
 }
 
 .empty-state pre {
@@ -188,18 +203,29 @@
 /* Адаптивность */
 @media (max-width: 1024px) {
   .messenger-main {
-    gap: var(--spacing-lg);
+    gap: var(--spacing-md);
   }
 
-  .panel-chats {
+  .sidebar {
     width: var(--sidebar-width-collapsed);
   }
 }
 
 @media (max-width: 768px) {
+  .messenger-container {
+    height: 100vh;
+    padding: 0;
+  }
+
+  #root {
+    padding: 0;
+  }
+
   .messenger-header {
-    margin-bottom: var(--spacing-md);
-    border-radius: var(--radius-lg);
+    margin-bottom: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
   }
 
   .messenger-header-content {
@@ -213,38 +239,32 @@
 
   .messenger-main {
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: 0;
   }
 
-  .panel {
+  .sidebar {
     width: 100%;
-    border-radius: var(--radius-lg);
+    height: 100%;
+    position: absolute;
+    top: var(--header-height);
+    left: 0;
+    z-index: 10;
+    border-radius: 0;
   }
 
-  .panel-chats,
-  .panel-chat,
-  .panel-search {
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .chat-area {
     width: 100%;
-    flex: none;
+    height: 100%;
+    border-radius: 0;
+    border: none;
   }
 
-  .mobile-nav {
-    gap: var(--spacing-xs);
-  }
-
-  .mobile-nav-btn {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: var(--font-size-xs);
-  }
-}
-
-@media (max-width: 480px) {
-  .messenger-header-content {
-    padding: var(--spacing-sm) var(--spacing-md);
-  }
-
-  .empty-state {
-    padding: var(--spacing-lg);
-    min-height: 250px;
+  .sidebar-search,
+  .sidebar-chats {
+    height: auto;
   }
 }

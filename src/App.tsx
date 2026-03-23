@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { auth, checkUserExists, createUserProfile, getAllUsers, User } from './firebase';
 import Auth from './components/Auth';
-import Search from './components/Search';
-import Chat from './components/Chat';
+import SearchInput from './components/SearchInput';
 import ActiveChatsList from './components/ActiveChatsList';
+import Chat from './components/Chat';
 import Notifications from './components/Notifications';
 import './App.css';
 
@@ -21,8 +21,7 @@ function App() {
   const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= MOBILE_BREAKPOINT);
-  const [showSearch, setShowSearch] = useState(true);
-  const [showChatsList, setShowChatsList] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   useEffect(() => {
     const handleResize = () => {
@@ -59,14 +58,13 @@ function App() {
   const handleLogout = async () => {
     await auth.signOut();
     setSelectedUser(null);
-    setShowSearch(true);
+    setShowSidebar(true);
   };
 
   const handleSelectUser = (selectedUser: SelectedUser) => {
     setSelectedUser(selectedUser);
     if (isMobile) {
-      setShowSearch(false);
-      setShowChatsList(false);
+      setShowSidebar(false);
     }
   };
 
@@ -77,8 +75,7 @@ function App() {
       name: selectedUser.name
     });
     if (isMobile) {
-      setShowSearch(false);
-      setShowChatsList(false);
+      setShowSidebar(false);
     }
   };
 
@@ -105,8 +102,7 @@ function App() {
     return <Auth onAuth={() => setUser(auth.currentUser as User)} />;
   }
 
-  const showLeftPanel = isMobile ? showSearch : true;
-  const showChatPanel = isMobile ? (!showSearch && !showChatsList) : true;
+  const showChatPanel = isMobile ? selectedUser : true;
 
   return (
     <div className="messenger-container">
@@ -117,16 +113,17 @@ function App() {
             <span>{'user@messenger:~$'}</span>
             <span className="email">{user.email}</span>
           </div>
+          <SearchInput
+            onSelectUser={handleSelectUser}
+            currentUserId={user.uid}
+          />
           <div className="header-actions">
             {isMobile && (
               <button
-                onClick={() => {
-                  setShowChatsList(!showChatsList);
-                  setShowSearch(false);
-                }}
-                className={`btn-terminal ${showChatsList ? 'btn-terminal-primary' : ''}`}
+                onClick={() => setShowSidebar(true)}
+                className="btn-terminal"
               >
-                {'[ CHATS ]'}
+                {'[ MENU ]'}
               </button>
             )}
             <button
@@ -139,59 +136,30 @@ function App() {
         </div>
       </header>
 
-      {/* Mobile Navigation */}
-      {isMobile && selectedUser && (
-        <nav className="mobile-nav">
-          {!showChatsList && (
-            <button
-              onClick={() => setShowSearch(!showSearch)}
-              className="btn-terminal mobile-nav-btn"
-            >
-              {showSearch ? '[ BACK TO CHAT ]' : '[ SHOW USERS ]'}
-            </button>
-          )}
-          {showChatsList && (
-            <button
-              onClick={() => setShowChatsList(false)}
-              className="btn-terminal mobile-nav-btn"
-            >
-              {'[ BACK TO CHAT ]'}
-            </button>
-          )}
-        </nav>
-      )}
-
       {/* Main Content */}
       <main className="messenger-main">
-        {/* Left Panel - Search */}
-        {showLeftPanel && !showChatsList && (
-          <div className="panel panel-search">
-            <Search
-              onSelectUser={handleSelectUser}
-              currentUserId={user.uid}
-            />
-          </div>
-        )}
-
-        {/* Chats List */}
-        {(!isMobile || (isMobile && showChatsList)) && (
-          <div className="panel panel-chats">
+        {/* Sidebar - Chats List */}
+        <aside className={`sidebar ${isMobile && !showSidebar ? 'hide-mobile' : ''}`}>
+          <div className="sidebar-chats">
             <ActiveChatsList
               currentUserId={user.uid}
               onSelectChat={handleSelectUser}
             />
           </div>
-        )}
+        </aside>
 
-        {/* Chat Panel */}
-        {showChatPanel && (
-          <div className="panel panel-chat">
-            {selectedUser ? (
+        {/* Chat Area */}
+        <section className="chat-area">
+          {showChatPanel ? (
+            selectedUser ? (
               <Chat
                 otherUser={selectedUser}
                 currentUser={user}
                 isMobile={isMobile}
-                onBack={() => setShowSearch(true)}
+                onBack={() => {
+                  setSelectedUser(null);
+                  setShowSidebar(true);
+                }}
               />
             ) : (
               <div className="empty-state">
@@ -200,15 +168,25 @@ function App() {
 │                                         │
 │    > SELECT A USER TO START CHATTING    │
 │                                         │
-│    Use the search panel or active       │
-│    chats list to select a user          │
+│    Use the search or active chats       │
+│    in the sidebar to select a user      │
 │                                         │
 └─────────────────────────────────────────┘`}
                 </pre>
               </div>
-            )}
-          </div>
-        )}
+            )
+          ) : (
+            <div className="empty-state">
+              <pre>
+                {`┌─────────────────────────────────────────┐
+│                                         │
+│    > SELECT A USER TO START CHATTING    │
+│                                         │
+└─────────────────────────────────────────┘`}
+              </pre>
+            </div>
+          )}
+        </section>
       </main>
 
       {/* Notifications */}
