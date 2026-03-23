@@ -15,7 +15,10 @@ import {
   editMessage,
   deleteMessages,
   sendImageMessage,
-  sendFileMessage
+  sendFileMessage,
+  saveChatBackground,
+  listenChatBackground,
+  ChatBackground
 } from '../firebase';
 import './Chat.css';
 
@@ -74,6 +77,8 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
   const [selectionMode, setSelectionMode] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [chatBackground, setChatBackground] = useState<ChatBackground | null>(null);
+  const [showBackgroundModal, setShowBackgroundModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -110,6 +115,16 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
 
     return () => unsubscribe();
   }, [currentUser, otherUser]);
+
+  useEffect(() => {
+    if (!currentUser || !otherUser) return;
+
+    const unsubscribe = listenChatBackground(chatId, (background) => {
+      setChatBackground(background);
+    });
+
+    return () => unsubscribe();
+  }, [chatId, currentUser, otherUser]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -540,10 +555,42 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
     setSelectedImage(null);
   };
 
+  const handleBackgroundSelect = async (background: ChatBackground) => {
+    try {
+      await saveChatBackground(chatId, background);
+      setChatBackground(background);
+      setShowBackgroundModal(false);
+    } catch (error) {
+      console.error('Error saving background:', error);
+    }
+  };
+
+  const handleBackgroundImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+
+    try {
+      const imageUrl = await uploadImage(file, currentUser.uid, otherUser.uid);
+      await handleBackgroundSelect({ type: 'image', value: imageUrl });
+      if (e.target) {
+        e.target.value = '';
+      }
+    } catch (error) {
+      console.error('Error uploading background image:', error);
+    }
+  };
+
   return (
-    <div 
+    <div
       ref={chatContainerRef}
       className="chat-container"
+      style={chatBackground ? {
+        background: chatBackground.type === 'gradient' ? chatBackground.value : undefined,
+        backgroundColor: chatBackground.type === 'color' ? chatBackground.value : undefined,
+        backgroundImage: chatBackground.type === 'image' ? `url(${chatBackground.value})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      } : undefined}
       onPaste={handlePaste}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -595,13 +642,22 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
               </button>
             </>
           ) : (
-            <button
-              onClick={toggleSelectionMode}
-              className="btn-terminal"
-              title="Select multiple messages"
-            >
-              {'[ SELECT ]'}
-            </button>
+            <>
+              <button
+                onClick={() => setShowBackgroundModal(true)}
+                className="btn-terminal"
+                title="Change chat background"
+              >
+                {'[ BG ]'}
+              </button>
+              <button
+                onClick={toggleSelectionMode}
+                className="btn-terminal"
+                title="Select multiple messages"
+              >
+                {'[ SELECT ]'}
+              </button>
+            </>
           )}
         </div>
         {isMobile && onBack && (
@@ -958,6 +1014,106 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
                 {'[ SAVE ]'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Background Modal */}
+      {showBackgroundModal && (
+        <div className="bg-modal" onClick={() => setShowBackgroundModal(false)}>
+          <div className="bg-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-modal-header">
+              <span>{'> CHAT_BACKGROUND:'}</span>
+              <button onClick={() => setShowBackgroundModal(false)} className="bg-modal-close">
+                {'[ CLOSE ]'}
+              </button>
+            </div>
+            <div className="bg-modal-body">
+              {/* Colors */}
+              <div className="bg-section">
+                <div className="bg-section-title">{'> COLORS:'}</div>
+                <div className="bg-colors-grid">
+                  {[
+                    { name: 'Default', value: 'var(--bg-primary)' },
+                    { name: 'Dark', value: '#1a1a2e' },
+                    { name: 'Blue', value: '#1e3a5f' },
+                    { name: 'Green', value: '#1a3d2e' },
+                    { name: 'Purple', value: '#2d1a4f' },
+                    { name: 'Gray', value: '#2a2a2a' }
+                  ].map((color) => (
+                    <button
+                      key={color.name}
+                      className={`bg-color-option ${chatBackground?.type === 'color' && chatBackground?.value === color.value ? 'selected' : ''}`}
+                      style={{ background: color.value }}
+                      onClick={() => handleBackgroundSelect({ type: 'color', value: color.value })}
+                    >
+                      {color.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gradients */}
+              <div className="bg-section">
+                <div className="bg-section-title">{'> GRADIENTS:'}</div>
+                <div className="bg-gradients-grid">
+                  {[
+                    { name: 'Sunset', value: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                    { name: 'Ocean', value: 'linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)' },
+                    { name: 'Forest', value: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' },
+                    { name: 'Fire', value: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+                    { name: 'Night', value: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)' },
+                    { name: 'Gold', value: 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)' }
+                  ].map((gradient) => (
+                    <button
+                      key={gradient.name}
+                      className={`bg-gradient-option ${chatBackground?.type === 'gradient' && chatBackground?.value === gradient.value ? 'selected' : ''}`}
+                      style={{ background: gradient.value }}
+                      onClick={() => handleBackgroundSelect({ type: 'gradient', value: gradient.value })}
+                    >
+                      {gradient.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Image */}
+              <div className="bg-section">
+                <div className="bg-section-title">{'> CUSTOM_IMAGE:'}</div>
+                <div className="bg-image-upload">
+                  <input
+                    type="file"
+                    id="bg-image-input"
+                    accept="image/*"
+                    onChange={handleBackgroundImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="bg-image-input" className="bg-upload-btn">
+                    {'[ UPLOAD_IMAGE ]'}
+                  </label>
+                  {chatBackground?.type === 'image' && (
+                    <button
+                      className="bg-remove-btn"
+                      onClick={() => handleBackgroundSelect({ type: 'color', value: 'var(--bg-primary)' })}
+                    >
+                      {'[ REMOVE ]'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div className="image-modal" onClick={closeImageModal}>
+          <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button onClick={closeImageModal} className="image-modal-close">
+              {'[ CLOSE ]'}
+            </button>
+            <img src={selectedImage} alt="Full size" />
           </div>
         </div>
       )}

@@ -42,6 +42,11 @@ export interface User {
   createdAt?: number;
 }
 
+export interface ChatBackground {
+  type: 'color' | 'gradient' | 'image';
+  value: string;
+}
+
 export interface Message {
   id?: string;
   text: string;
@@ -837,4 +842,56 @@ export const sendMultipleFilesMessage = async (
     console.error('Send multiple files error:', error);
     throw error;
   }
+};
+
+// === Функции для работы с фоном чата ===
+
+// Сохранить фон чата
+export const saveChatBackground = async (
+  chatId: string,
+  background: ChatBackground
+) => {
+  try {
+    const chatRef = doc(db, 'chats', chatId);
+    await setDoc(chatRef, {
+      background,
+      updatedAt: Date.now()
+    }, { merge: true });
+  } catch (error) {
+    console.error('Save chat background error:', error);
+    throw error;
+  }
+};
+
+// Получить фон чата
+export const getChatBackground = async (
+  chatId: string
+): Promise<ChatBackground | null> => {
+  try {
+    const chatRef = doc(db, 'chats', chatId);
+    const chatSnap = await getDoc(chatRef);
+    if (chatSnap.exists()) {
+      return chatSnap.data().background || null;
+    }
+    return null;
+  } catch (error) {
+    console.error('Get chat background error:', error);
+    return null;
+  }
+};
+
+// Слушать изменения фона чата
+export const listenChatBackground = (
+  chatId: string,
+  callback: (background: ChatBackground | null) => void
+) => {
+  const chatRef = doc(db, 'chats', chatId);
+  
+  return onSnapshot(chatRef, (docSnap) => {
+    if (docSnap.exists()) {
+      callback(docSnap.data().background || null);
+    } else {
+      callback(null);
+    }
+  });
 };
