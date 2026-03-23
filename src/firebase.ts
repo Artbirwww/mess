@@ -49,7 +49,14 @@ export interface Message {
   toId: string;
   timestamp: number;
   imageUrl?: string;
+  imageUrls?: string[];
   fileUrl?: string;
+  files?: Array<{
+    url: string;
+    name: string;
+    type: string;
+    size: number;
+  }>;
   fileName?: string;
   fileType?: string;
   fileSize?: number;
@@ -59,6 +66,9 @@ export interface Message {
     text: string;
     fromId: string;
     fromName?: string;
+    imageCount?: number;
+    fileCount?: number;
+    fileNames?: string[];
   };
 }
 
@@ -111,6 +121,9 @@ export const sendMessage = async (
     text: string;
     fromId: string;
     fromName?: string;
+    imageCount?: number;
+    fileCount?: number;
+    fileNames?: string[];
   }
 ) => {
   try {
@@ -743,6 +756,85 @@ export const editMessage = async (
     });
   } catch (error) {
     console.error('Edit message error:', error);
+    throw error;
+  }
+};
+
+// Отправить сообщение с несколькими файлами/изображениями
+export const sendMultipleFilesMessage = async (
+  fromId: string,
+  toId: string,
+  text: string,
+  files: Array<{
+    file: File;
+    url: string;
+    isImage: boolean;
+  }>,
+  replyTo?: {
+    messageId: string;
+    text: string;
+    fromId: string;
+    fromName?: string;
+    imageCount?: number;
+    fileCount?: number;
+    fileNames?: string[];
+  }
+) => {
+  try {
+    const chatId = [fromId, toId].sort().join('_');
+    
+    const imageUrls = files.filter(f => f.isImage).map(f => f.url);
+    const fileObjects = files.filter(f => !f.isImage).map(f => ({
+      url: f.url,
+      name: f.file.name,
+      type: f.file.type || 'application/octet-stream',
+      size: f.file.size
+    }));
+
+    const messageData: any = {
+      text: text || '',
+      fromId,
+      toId,
+      timestamp: Date.now(),
+    };
+
+    if (imageUrls.length > 0) {
+      messageData.imageUrls = imageUrls;
+    }
+    if (fileObjects.length > 0) {
+      messageData.files = fileObjects;
+    }
+    if (replyTo) {
+      messageData.replyTo = replyTo;
+    }
+
+    await addDoc(collection(db, 'chats', chatId, 'messages'), messageData);
+
+    // Обновляем localStorage
+    const toUser = await getUserById(toId);
+    const fromUser = await getUserById(fromId);
+    
+    const summary = `${imageUrls.length > 0 ? `📷 ${imageUrls.length} image(s)` : ''}${fileObjects.length > 0 ? `${imageUrls.length > 0 ? ' + ' : ''}📎 ${fileObjects.length} file(s)` : ''}`;
+    
+    updateChatInStorage(
+      fromId,
+      toId,
+      toUser?.email || toId,
+      toUser?.name,
+      text || summary,
+      true
+    );
+
+    updateChatInStorage(
+      toId,
+      fromId,
+      fromUser?.email || fromId,
+      fromUser?.name,
+      text || summary,
+      false
+    );
+  } catch (error) {
+    console.error('Send multiple files error:', error);
     throw error;
   }
 };

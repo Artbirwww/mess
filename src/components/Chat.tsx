@@ -7,14 +7,15 @@ import {
   updateChatInStorage,
   incrementUnreadInStorage,
   uploadImage,
-  sendImageMessage,
   uploadFile,
-  sendFileMessage,
+  sendMultipleFilesMessage,
   getFileIcon,
   formatFileSize,
   deleteMessage,
   editMessage,
-  deleteMessages
+  deleteMessages,
+  sendImageMessage,
+  sendFileMessage
 } from '../firebase';
 import './Chat.css';
 
@@ -46,6 +47,17 @@ interface ReplyState {
   text: string;
   fromId: string;
   fromName?: string;
+  imageCount?: number;
+  fileCount?: number;
+  fileNames?: string[];
+}
+
+interface PendingFile {
+  file: File;
+  preview?: string;
+  uploading: boolean;
+  uploaded: boolean;
+  error?: string;
 }
 
 export default function Chat({ otherUser, currentUser, isMobile = false, onBack }: ChatProps) {
@@ -60,10 +72,13 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
   const [editText, setEditText] = useState('');
   const [selectedMessages, setSelectedMessages] = useState<Set<string>>(new Set());
   const [selectionMode, setSelectionMode] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileInputGeneralRef = useRef<HTMLInputElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef<number>(0);
   const chatId = [currentUser.uid, otherUser.uid].sort().join('_');
   const editInputRef = useRef<HTMLInputElement>(null);
@@ -112,6 +127,171 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
     return () => document.removeEventListener('click', handleClick);
   }, [contextMenu]);
 
+  // Обработка вставки из буфера обмена
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === 'file') {
+        const file = item.getAsFile();
+        if (file) {
+          files.push(file);
+        }
+      }
+    }
+
+    if (files.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      await addFiles(files);
+    }
+  };
+
+  // Обработка перетаскивания
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      await addFiles(files);
+    }
+  };
+
+  // Добавление файлов в очередь
+  const addFiles = async (files: File[]) => {
+    const newPendingFiles: PendingFile[] = files.map(file => {
+      const isImage = file.type.startsWith('image/');
+      return {
+        file,
+        preview: isImage ? URL.createObjectURL(file) : undefined,
+        uploading: false,
+        uploaded: false
+      };
+    });
+
+    setPendingFiles(prev => [...prev, ...newPendingFiles]);
+  };
+
+  // Загрузка всех файлов и отправка одним сообщением
+  const sendAllPendingFiles = async () => {
+    const filesToSend = pendingFiles.filter(pf => !pf.uploaded && !pf.uploading);
+    if (filesToSend.length === 0) return;
+
+    // Помечаем все как загружаемые
+    const filePromises = filesToSend.map(async (pf) => {
+      setPendingFiles(prev => prev.map(p => 
+        p.file === pf.file ? { ...p, uploading: true } : p
+      ));
+
+      const isImage = pf.file.type.startsWith('image/');
+      let url = '';
+
+      try {
+        if (isImage) {
+          url = await uploadImage(pf.file, currentUser.uid, otherUser.uid);
+        } else {
+          const result = await uploadFile(pf.file, currentUser.uid, otherUser.uid);
+          url = result.url;
+        }
+
+        return {
+          file: pf.file,
+          url,
+          isImage,
+          error: null
+        };
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        return {
+          file: pf.file,
+          url: '',
+          isImage,
+          error: 'Ошибка загрузки'
+        };
+      }
+    });
+
+    const results = await Promise.all(filePromises);
+    const successfulFiles = results.filter(r => r.url && !r.error);
+    const failedFiles = results.filter(r => r.error);
+
+    // Отправляем одним сообщением все успешные файлы
+    if (successfulFiles.length > 0) {
+      try {
+        const replyData = replyTo ? {
+          messageId: replyTo.messageId,
+          text: replyTo.text,
+          fromId: replyTo.fromId,
+          fromName: replyTo.fromName
+        } : undefined;
+
+        await sendMultipleFilesMessage(
+          currentUser.uid,
+          otherUser.uid,
+          text, // Текст сообщения (если есть)
+          successfulFiles,
+          replyData
+        );
+
+        // Очищаем текст и файлы
+        setText('');
+        setReplyTo(null);
+
+        // Помечаем как отправленные
+        setPendingFiles(prev => prev.filter(pf => {
+          const failed = failedFiles.find(f => f.file === pf.file);
+          return !!failed;
+        }));
+
+        // Очищаем успешные файлы через 2 секунды
+        setTimeout(() => {
+          successfulFiles.forEach(sf => {
+            if (sf.file.type.startsWith('image/') && sf.url) {
+              URL.revokeObjectURL(sf.url);
+            }
+          });
+        }, 2000);
+      } catch (error) {
+        console.error('Error sending message:', error);
+      }
+    }
+
+    // Помечаем неудачные
+    failedFiles.forEach(ff => {
+      setPendingFiles(prev => prev.map(p => 
+        p.file === ff.file ? { ...p, uploading: false, error: ff.error || 'Ошибка' } : p
+      ));
+    });
+  };
+
+  // Удалить файл из очереди
+  const removeFile = (file: File) => {
+    setPendingFiles(prev => {
+      const pf = prev.find(p => p.file === file);
+      if (pf?.preview) {
+        URL.revokeObjectURL(pf.preview);
+      }
+      return prev.filter(p => p.file !== file);
+    });
+  };
+
   const handleContextMenu = (e: React.MouseEvent, message: Message) => {
     e.preventDefault();
     e.stopPropagation();
@@ -157,7 +337,6 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
       });
       setEditText(contextMenu.messageText);
       setContextMenu(null);
-      // Фокус на инпут после открытия модального окна
       setTimeout(() => editInputRef.current?.focus(), 100);
     }
   };
@@ -217,7 +396,7 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
 
   const handleDeleteSelectedMessages = async () => {
     if (selectedMessages.size === 0) return;
-    
+
     try {
       await deleteMessages(chatId, Array.from(selectedMessages));
       setSelectedMessages(new Set());
@@ -229,12 +408,22 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
 
   const handleReplyMessage = () => {
     if (contextMenu) {
+      const message = messages.find(m => m.id === contextMenu.messageId);
       const otherUserName = otherUser.name || otherUser.email;
+      
+      // Подсчитываем изображения и файлы
+      const imageCount = message?.imageUrls?.length || (message?.imageUrl ? 1 : 0);
+      const fileCount = message?.files?.length || 0;
+      const fileNames = message?.files?.map(f => f.name) || [];
+      
       setReplyTo({
         messageId: contextMenu.messageId,
         text: contextMenu.messageText,
-        fromId: contextMenu.messageId ? messages.find(m => m.id === contextMenu.messageId)?.fromId || '' : '',
-        fromName: otherUserName
+        fromId: message?.fromId || '',
+        fromName: otherUserName,
+        imageCount,
+        fileCount,
+        fileNames
       });
       setContextMenu(null);
       inputRef.current?.focus();
@@ -246,30 +435,39 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
   };
 
   const handleSend = async () => {
-    if (!text.trim() || sending) return;
-
-    const messageText = text;
-    setText('');
-    setReplyTo(null);
+    const hasText = text.trim();
+    const hasFiles = pendingFiles.filter(pf => !pf.uploaded && !pf.uploading).length > 0;
+    
+    if ((!hasText && !hasFiles) || sending) return;
 
     setSending(true);
+    
     try {
-      const replyData = replyTo ? {
-        messageId: replyTo.messageId,
-        text: replyTo.text,
-        fromId: replyTo.fromId,
-        fromName: replyTo.fromName
-      } : undefined;
+      // Если есть и текст и файлы, или только файлы - отправляем одним сообщением
+      if (hasFiles) {
+        await sendAllPendingFiles();
+      } else if (hasText) {
+        // Только текст - отправляем как обычное сообщение
+        const messageText = text;
+        setText('');
+        setReplyTo(null);
 
-      await sendMessage(
-        currentUser.uid,
-        otherUser.uid,
-        messageText,
-        replyData
-      );
+        const replyData = replyTo ? {
+          messageId: replyTo.messageId,
+          text: replyTo.text,
+          fromId: replyTo.fromId,
+          fromName: replyTo.fromName
+        } : undefined;
+
+        await sendMessage(
+          currentUser.uid,
+          otherUser.uid,
+          messageText,
+          replyData
+        );
+      }
     } catch (error) {
-      console.error('Error sending message:', error);
-      setText(messageText);
+      console.error('Error sending:', error);
     } finally {
       setSending(false);
     }
@@ -310,7 +508,7 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
 
     setUploading(true);
     try {
-      const { url: fileUrl, resourceType } = await uploadFile(file, currentUser.uid, otherUser.uid);
+      const { url: fileUrl } = await uploadFile(file, currentUser.uid, otherUser.uid);
       await sendFileMessage(
         currentUser.uid,
         otherUser.uid,
@@ -343,7 +541,24 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
   };
 
   return (
-    <div className="chat-container">
+    <div 
+      ref={chatContainerRef}
+      className="chat-container"
+      onPaste={handlePaste}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Drop Zone Overlay */}
+      {isDragOver && (
+        <div className="chat-drop-overlay">
+          <div className="chat-drop-overlay-content">
+            <span className="chat-drop-overlay-icon">📁</span>
+            <span className="chat-drop-overlay-text">{'DROP FILES TO SEND'}</span>
+          </div>
+        </div>
+      )}
+
       <div className="chat-header">
         <div className="chat-user-info">
           <div className="chat-user-name">
@@ -399,6 +614,48 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
         )}
       </div>
 
+      {/* Pending Files Bar */}
+      {pendingFiles.length > 0 && (
+        <div className="chat-pending-files-bar">
+          <div className="chat-pending-files-list">
+            {pendingFiles.map((pf, index) => (
+              <div 
+                key={index}
+                className={`chat-pending-file ${pf.uploaded ? 'uploaded' : ''} ${pf.uploading ? 'uploading' : ''} ${pf.error ? 'error' : ''}`}
+              >
+                {pf.preview && (
+                  <div className="chat-pending-file-preview">
+                    <img src={pf.preview} alt={pf.file.name} />
+                  </div>
+                )}
+                {!pf.preview && (
+                  <div className="chat-pending-file-icon">📎</div>
+                )}
+                <div className="chat-pending-file-info">
+                  <div className="chat-pending-file-name">{pf.file.name}</div>
+                  {pf.uploading && (
+                    <div className="chat-pending-file-status uploading">⏳ Uploading...</div>
+                  )}
+                  {pf.uploaded && (
+                    <div className="chat-pending-file-status uploaded">✅ Sent</div>
+                  )}
+                  {pf.error && (
+                    <div className="chat-pending-file-status error">{pf.error}</div>
+                  )}
+                </div>
+                <button
+                  onClick={() => removeFile(pf.file)}
+                  className="chat-pending-file-remove"
+                  disabled={pf.uploading || pf.uploaded}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="chat-messages">
         {messages.length === 0 ? (
           <div className="chat-empty-state">
@@ -438,17 +695,48 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
                     />
                   )}
                   <div className="chat-message-bubble">
-                    {msg.replyTo && msg.replyTo.text && (
+                    {msg.replyTo && (
                       <div className="chat-message-reply">
                         <span className="chat-message-reply-from">
                           {`> RE: ${replyFromName}`}
                         </span>
-                        <span className="chat-message-reply-text">
-                          {msg.replyTo.text.substring(0, 100)}{msg.replyTo.text.length > 100 ? '...' : ''}
+                        <span className="chat-message-reply-content">
+                          {msg.replyTo.imageCount ? (
+                            <span className="chat-message-reply-media">
+                              {'📷 '}{msg.replyTo.imageCount} image{msg.replyTo.imageCount > 1 ? 's' : ''}
+                            </span>
+                          ) : null}
+                          {msg.replyTo.fileCount ? (
+                            <span className="chat-message-reply-media">
+                              {'📎 '}{msg.replyTo.fileCount} file{msg.replyTo.fileCount > 1 ? 's' : ''}
+                            </span>
+                          ) : null}
+                          {msg.replyTo.text && (
+                            <span className="chat-message-reply-text">
+                              {msg.replyTo.text.substring(0, 100)}{msg.replyTo.text.length > 100 ? '...' : ''}
+                            </span>
+                          )}
                         </span>
                       </div>
                     )}
-                    {msg.imageUrl && (
+                    
+                    {/* Несколько изображений */}
+                    {msg.imageUrls && msg.imageUrls.length > 0 && (
+                      <div className="chat-message-images">
+                        {msg.imageUrls.map((url, idx) => (
+                          <div key={idx} className="chat-message-image">
+                            <img
+                              src={url}
+                              alt={`Shared image ${idx + 1}`}
+                              onClick={() => handleImageClick(url)}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Одно изображение (старый формат) */}
+                    {msg.imageUrl && !msg.imageUrls && (
                       <div className="chat-message-image">
                         <img
                           src={msg.imageUrl}
@@ -457,7 +745,32 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
                         />
                       </div>
                     )}
-                    {msg.fileUrl && (
+                    
+                    {/* Несколько файлов */}
+                    {msg.files && msg.files.length > 0 && (
+                      <div className="chat-message-files">
+                        {msg.files.map((file, idx) => (
+                          <a
+                            key={idx}
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="chat-file-link"
+                          >
+                            <span className="chat-file-icon">{getFileIcon(file.type, file.name)}</span>
+                            <div className="chat-file-info">
+                              <span className="chat-file-name">{file.name || 'File'}</span>
+                              {file.size && (
+                                <span className="chat-file-size">{formatFileSize(file.size)}</span>
+                              )}
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Один файл (старый формат) */}
+                    {msg.fileUrl && !msg.files && (
                       <div className="chat-message-file">
                         <a
                           href={msg.fileUrl}
@@ -475,6 +788,7 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
                         </a>
                       </div>
                     )}
+                    
                     {msg.text && (
                       <div className="chat-message-text">
                         {msg.text}
@@ -529,9 +843,26 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
         <div className="chat-input-wrapper">
           {replyTo && (
             <div className="chat-reply-preview">
-              <span className="chat-reply-preview-text">
-                {'> RE: '}{replyTo.text.substring(0, 50)}{replyTo.text.length > 50 ? '...' : ''}
-              </span>
+              <div className="chat-reply-preview-content">
+                <span className="chat-reply-preview-from">
+                  {'> RE: '}{replyTo.fromName || otherUser.email}
+                </span>
+                {replyTo.imageCount ? (
+                  <span className="chat-reply-preview-media">
+                    {'📷 '}{replyTo.imageCount} image{replyTo.imageCount > 1 ? 's' : ''}
+                  </span>
+                ) : null}
+                {replyTo.fileCount ? (
+                  <span className="chat-reply-preview-media">
+                    {'📎 '}{replyTo.fileCount} file{replyTo.fileCount > 1 ? 's' : ''}
+                  </span>
+                ) : null}
+                {replyTo.text && (
+                  <span className="chat-reply-preview-text">
+                    {replyTo.text.substring(0, 50)}{replyTo.text.length > 50 ? '...' : ''}
+                  </span>
+                )}
+              </div>
               <button onClick={handleCancelReply} className="chat-reply-cancel">
                 {'×'}
               </button>
@@ -544,17 +875,17 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="type your message..."
+            placeholder={pendingFiles.length > 0 ? `${pendingFiles.length} file(s) ready to send...` : "type your message... (Ctrl+V to paste files)"}
             autoFocus
             className="chat-input input-terminal"
           />
         </div>
         <button
           onClick={handleSend}
-          disabled={sending || !text.trim()}
+          disabled={sending || (!text.trim() && pendingFiles.filter(pf => !pf.uploaded && !pf.uploading).length === 0)}
           className="chat-btn chat-btn-send"
         >
-          {sending ? '[ SENDING ]' : '[ SEND ]'}
+          {sending ? '[ SENDING ]' : pendingFiles.length > 0 ? `[ SEND ${pendingFiles.length} ]` : '[ SEND ]'}
         </button>
       </div>
 
@@ -599,7 +930,7 @@ export default function Chat({ otherUser, currentUser, isMobile = false, onBack 
               <span>{'> EDIT_MESSAGE:'}</span>
               <button onClick={handleCancelEdit} className="edit-modal-close">
                 {'[ CLOSE ]'}
-              </button>
+            </button>
             </div>
             <div className="edit-modal-body">
               <div className="edit-input-wrapper">
