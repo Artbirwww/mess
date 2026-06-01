@@ -1,0 +1,137 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg-card);
+  position: relative;
+}
+
+.dropOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border: 1px dashed var(--border-primary);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.menu {
+  position: fixed;
+  z-index: 2000;
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  min-width: 120px;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+}
+
+.menuItem:hover {
+  background: var(--bg-secondary);
+}
+
+.menuDanger {
+  color: var(--error);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: var(--spacing-lg);
+}
+
+.modal {
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 440px;
+  width: 100%;
+  padding: var(--spacing-lg);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.modalClose {
+  font-size: var(--font-size-xs);
+  padding: 4px 10px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.modalClose:hover {
+  border-color: var(--color-black);
+}
+
+.editInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.editInput:focus {
+  outline: none;
+  border-color: var(--color-black);
+}
+
+.colorGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.colorBtn {
+  padding: 8px 14px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  box-shadow: var(--shadow-sm);
+}
+
+.colorBtn:hover {
+  border-color: var(--color-black);
+}
+
+.imageModal img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-secondary);
+}

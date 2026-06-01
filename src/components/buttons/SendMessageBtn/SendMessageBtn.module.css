@@ -1,0 +1,23 @@
+.button {
+  padding: 10px 16px;
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border: 1px solid var(--color-black);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.button:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

@@ -1,0 +1,32 @@
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+  border: 1px solid var(--border-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.small {
+  width: 32px;
+  height: 32px;
+  font-size: var(--font-size-xs);
+}
+
+.large {
+  width: 96px;
+  height: 96px;
+  font-size: var(--font-size-2xl);
+}
+
+.image {
+  object-fit: cover;
+  display: block;
+}
