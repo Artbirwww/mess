@@ -26,7 +26,9 @@ export default function Login() {
       const messages = {
         'auth/user-not-found': 'User not found',
         'auth/wrong-password': 'Wrong password',
-        'auth/invalid-email': 'Invalid email'
+        'auth/invalid-email': 'Invalid email',
+        'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
+          'Firebase API key is missing or invalid. Update .env from Firebase Console (or GitHub secrets for the deployed site), then restart the dev server.'
       };
       setError(messages[err.code] || err.message);
     } finally {
