@@ -24,9 +24,16 @@ export default function Login() {
       navigate('/');
     } catch (err) {
       const messages = {
-        'auth/user-not-found': 'User not found',
+        'auth/user-not-found': 'No account with this email. Create one on the register page.',
         'auth/wrong-password': 'Wrong password',
         'auth/invalid-email': 'Invalid email',
+        'auth/invalid-credential': 'Incorrect email or password',
+        'auth/invalid-login-credentials': 'Incorrect email or password',
+        'auth/operation-not-allowed':
+          'Email/password sign-in is off. In Firebase Console → Authentication → Sign-in method, enable Email/Password.',
+        'auth/too-many-requests': 'Too many attempts. Wait a few minutes and try again.',
+        'auth/user-disabled': 'This account has been disabled',
+        'auth/missing-password': 'Enter your password',
         'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
           'Firebase API key is missing or invalid. Update .env from Firebase Console (or GitHub secrets for the deployed site), then restart the dev server.'
       };
