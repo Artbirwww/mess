@@ -104,6 +104,13 @@
   cursor: pointer;
   border-bottom: 1px solid var(--border-dim);
   transition: background var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.dropdownMeta {
+  min-width: 0;
 }
 
 .dropdownItem:last-child {

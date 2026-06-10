@@ -4,6 +4,21 @@
   height: calc(100vh - 2 * var(--spacing-xl));
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.menuButton {
+  position: fixed;
+  top: var(--spacing-md);
+  left: var(--spacing-md);
+  z-index: 100;
+  padding: 8px 12px;
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
 }
 
 .main {
@@ -56,6 +71,7 @@
 @media (max-width: 768px) {
   .layout {
     height: 100vh;
+    padding-top: 56px;
   }
 
   .main {
@@ -80,5 +96,10 @@
   .chatArea {
     border-radius: 0;
     border: none;
+  }
+  
+  .menuButton {
+    top: 10px;
+    left: 10px;
   }
 }

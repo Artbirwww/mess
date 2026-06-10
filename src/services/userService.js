@@ -8,14 +8,43 @@ import {
   getDoc,
   updateDoc
 } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db } from '../config/firebase';
 
-export const createUserProfile = async (userId, email, name) => {
+export function formatUserName(user) {
+  if (!user) return '';
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+  if (fullName) return fullName;
+  if (user.name?.trim()) return user.name.trim();
+  return user.email || '';
+}
+
+export function toChatUser(user) {
+  if (!user) return null;
+  return {
+    uid: user.uid,
+    email: user.email,
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    name: formatUserName(user),
+    photoURL: user.photoURL || ''
+  };
+}
+
+export const createUserProfile = async (userId, email, profileData = {}) => {
   try {
+    const data = typeof profileData === 'string' ? { name: profileData } : profileData;
+    const firstName = (data.firstName || '').trim();
+    const lastName = (data.lastName || '').trim();
+    const name =
+      [firstName, lastName].filter(Boolean).join(' ').trim() || (data.name || '').trim();
+
     await setDoc(doc(db, 'users', userId), {
       uid: userId,
       email,
+      firstName,
+      lastName,
       name,
+      phone: data.phone || '',
       createdAt: Date.now()
     });
   } catch (error) {

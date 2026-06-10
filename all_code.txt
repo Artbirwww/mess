@@ -1,0 +1,5331 @@
+﻿
+=== ФАЙЛ: C:\mess\firebase\firestore.rules ===
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null;
+
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    match /readTimes/{readTimeId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+
+=== ФАЙЛ: C:\mess\firebase\README.md ===
+# Firebase
+
+Deploy Firestore rules from this folder:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+Copy `firestore.rules` into your Firebase console or link this file in `firebase.json`.
+
+=== ФАЙЛ: C:\mess\src\components\auth\ProtectedRoute.jsx ===
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import styles from './ProtectedRoute.module.css';
+
+export default function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className={styles.loading}>
+        <p className={styles.text}>Loading…</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+=== ФАЙЛ: C:\mess\src\components\auth\ProtectedRoute.module.css ===
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.text {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+=== ФАЙЛ: C:\mess\src\components\avatars\Avatar.jsx ===
+import styles from './Avatar.module.css';
+
+export default function Avatar({ name, email, photoURL, size }) {
+  const label = (name || email || '?').charAt(0).toUpperCase();
+  const sizeClass =
+    size === 'small' ? styles.small : size === 'large' ? styles.large : '';
+
+  if (photoURL) {
+    return (
+      <img
+        src={photoURL}
+        alt=""
+        className={`${styles.avatar} ${styles.image} ${sizeClass}`}
+      />
+    );
+  }
+
+  return (
+    <div className={`${styles.avatar} ${sizeClass}`}>
+      {label}
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\avatars\Avatar.module.css ===
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+  border: 1px solid var(--border-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.small {
+  width: 32px;
+  height: 32px;
+  font-size: var(--font-size-xs);
+}
+
+.large {
+  width: 96px;
+  height: 96px;
+  font-size: var(--font-size-2xl);
+}
+
+.image {
+  object-fit: cover;
+  display: block;
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\gotoRegisterBtn\GotoRegisterBtn.jsx ===
+import { Link } from 'react-router-dom';
+import styles from './GotoRegisterBtn.module.css';
+
+export default function GotoRegisterBtn() {
+  return (
+    <Link to="/register" className={styles.link}>
+      Create an account
+    </Link>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\gotoRegisterBtn\GotoRegisterBtn.module.css ===
+.link {
+  display: inline-block;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.link:hover {
+  border-color: var(--color-black);
+  background: var(--bg-secondary);
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\LoginBtn\LoginBtn.jsx ===
+import styles from './LoginBtn.module.css';
+
+export default function LoginBtn({ loading, isLogin = true }) {
+  return (
+    <button type="submit" disabled={loading} className={styles.submit}>
+      {loading ? 'Please wait…' : isLogin ? 'Sign in' : 'Create account'}
+    </button>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\LoginBtn\LoginBtn.module.css ===
+.submit {
+  width: 100%;
+  padding: 12px;
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border: 1px solid var(--color-black);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\PinFile\PinFile.jsx ===
+import styles from './PinFile.module.css';
+
+export default function PinFile({ fileInputRef, generalInputRef, uploading, onImageSelect, onFileSelect }) {
+  return (
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={onImageSelect}
+        hidden
+      />
+      <input ref={generalInputRef} type="file" onChange={onFileSelect} hidden />
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
+        className={styles.button}
+        title="Attach image"
+      >
+        Image
+      </button>
+      <button
+        type="button"
+        onClick={() => generalInputRef.current?.click()}
+        disabled={uploading}
+        className={styles.button}
+        title="Attach file"
+      >
+        File
+      </button>
+    </>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\PinFile\PinFile.module.css ===
+.button {
+  padding: 10px 12px;
+  background: var(--color-white);
+  color: var(--text-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+  transition: border-color var(--transition-fast);
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--color-black);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\RegBtn\RegBtn.jsx ===
+import styles from './RegBtn.module.css';
+
+export default function RegBtn({ onClick, isLogin, children }) {
+  return (
+    <div className={styles.toggle}>
+      <button type="button" onClick={onClick} className={styles.link}>
+        {children || (isLogin ? 'Create an account' : 'Back to sign in')}
+      </button>
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\RegBtn\RegBtn.module.css ===
+.toggle {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-secondary);
+  text-align: center;
+}
+
+.link {
+  display: inline-block;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.link:hover {
+  border-color: var(--color-black);
+  background: var(--bg-secondary);
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\ScrollToBottomBtn\ScrollToBottomBtn.jsx ===
+import styles from './ScrollToBottomBtn.module.css';
+
+export default function ScrollToBottomBtn({ onClick, visible = true, label = 'Scroll down' }) {
+  if (!visible) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={styles.button}
+      title={label}
+      aria-label={label}
+    >
+      ↓
+    </button>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\ScrollToBottomBtn\ScrollToBottomBtn.module.css ===
+.button {
+  position: absolute;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-secondary);
+  background: var(--color-white);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  line-height: 1;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.button:hover {
+  border-color: var(--color-black);
+  box-shadow: var(--shadow-lg);
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\SendMessageBtn\SendMessageBtn.jsx ===
+import styles from './SendMessageBtn.module.css';
+
+export default function SendMessageBtn({ onClick, disabled, sending, pendingCount = 0 }) {
+  let label = 'Send';
+  if (sending) label = 'Sending…';
+  else if (pendingCount > 0) label = `Send (${pendingCount})`;
+
+  return (
+    <button type="button" onClick={onClick} disabled={disabled} className={styles.button}>
+      {label}
+    </button>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\buttons\SendMessageBtn\SendMessageBtn.module.css ===
+.button {
+  padding: 10px 16px;
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border: 1px solid var(--color-black);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.button:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-md);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+=== ФАЙЛ: C:\mess\src\components\headers\ChatListHeader\ChatListHeader.jsx ===
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { searchUsers, formatUserName, toChatUser } from '../../../services/userService';
+import { useAuth } from '../../../context/AuthContext';
+import Avatar from '../../avatars/Avatar';
+import styles from './ChatListHeader.module.css';
+
+export default function ChatListHeader({ onSelectUser, onLogout, isMobile, onShowSidebar }) {
+  const { user } = useAuth();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSearch = async () => {
+    if (!query.trim()) {
+      setResults([]);
+      return;
+    }
+    setLoading(true);
+    const users = await searchUsers(query);
+    setResults(users.filter((u) => u.uid !== user.uid));
+    setLoading(false);
+    setShowDropdown(true);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') handleSearch();
+  };
+
+  const handleSelect = (selected) => {
+    onSelectUser(toChatUser(selected));
+    setQuery('');
+    setResults([]);
+    setShowDropdown(false);
+  };
+
+  return (
+    <header className={styles.header}>
+      <div className={styles.inner}>
+        <Link to="/profile" className={styles.user}>
+          <Avatar
+            name={formatUserName(user)}
+            email={user?.email}
+            photoURL={user?.photoURL}
+            size="small"
+          />
+          <span className={styles.userLabel}>{formatUserName(user) || user?.email}</span>
+        </Link>
+
+        <div className={styles.searchWrap} ref={dropdownRef}>
+          <div className={styles.searchGroup}>
+            <input
+              type="text"
+              placeholder="Search people…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyPress}
+              className={styles.searchInput}
+              onFocus={() => query.trim() && setShowDropdown(true)}
+            />
+          </div>
+          {showDropdown && (
+            <div className={styles.dropdown}>
+              {results.length === 0 ? (
+                query.trim() && !loading ? (
+                  <div className={styles.dropdownEmpty}>No users found</div>
+                ) : null
+              ) : (
+                results.map((u) => (
+                  <div
+                    key={u.uid}
+                    className={styles.dropdownItem}
+                    onClick={() => handleSelect(u)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <Avatar
+                      name={formatUserName(u)}
+                      email={u.email}
+                      photoURL={u.photoURL}
+                      size="small"
+                    />
+                    <div className={styles.dropdownMeta}>
+                      <div className={styles.dropdownName}>{formatUserName(u)}</div>
+                      <div className={styles.dropdownEmail}>{u.email}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className={styles.actions}>
+          {isMobile && (
+            <button type="button" onClick={onShowSidebar} className={styles.btn}>
+              Menu
+            </button>
+          )}
+          <button type="button" onClick={onLogout} className={`${styles.btn} ${styles.btnDanger}`}>
+            Sign out
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\headers\ChatListHeader\ChatListHeader.module.css ===
+.header {
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 100;
+}
+
+.inner {
+  padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.user {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.user:hover {
+  border-color: var(--color-black);
+  background: var(--bg-tertiary);
+}
+
+.userLabel {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.email {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.searchWrap {
+  position: relative;
+  flex: 1;
+  max-width: 320px;
+}
+
+.searchGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 6px 14px;
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+}
+
+.searchGroup:focus-within {
+  border-color: var(--color-black);
+  box-shadow: var(--shadow-md);
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.searchInput::placeholder {
+  color: var(--text-muted);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  padding: var(--spacing-md);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-dim);
+  transition: background var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.dropdownMeta {
+  min-width: 0;
+}
+
+.dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.dropdownItem:hover {
+  background: var(--bg-secondary);
+}
+
+.dropdownName {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.dropdownEmail {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.dropdownEmpty {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.btn {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  padding: 6px 12px;
+  background: var(--color-white);
+  color: var(--text-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.btn:hover {
+  border-color: var(--color-black);
+  background: var(--bg-secondary);
+}
+
+.btnDanger {
+  color: var(--error);
+}
+
+.btnDanger:hover {
+  background: var(--error-bg);
+  border-color: var(--color-gray-300);
+}
+
+@media (max-width: 768px) {
+  .searchWrap {
+    max-width: none;
+    width: 100%;
+    order: 3;
+  }
+}
+
+=== ФАЙЛ: C:\mess\src\components\headers\ChatWindowHeader\ChatWindowHeader.jsx ===
+import Avatar from '../../avatars/Avatar';
+import { formatUserName } from '../../../services/userService';
+import styles from './ChatWindowHeader.module.css';
+
+export default function ChatWindowHeader({
+  otherUser,
+  isMobile,
+  onBack,
+  selectionMode,
+  selectedCount,
+  messagesCount,
+  onSelectAll,
+  onDeleteSelected,
+  onClearSelection,
+  onToggleSelection,
+  onShowBackground,
+  searchOpen,
+  searchQuery,
+  searchMatchCount,
+  searchMatchIndex,
+  onToggleSearch,
+  onSearchQueryChange,
+  onSearchPrev,
+  onSearchNext
+}) {
+  const displayName = formatUserName(otherUser);
+
+  return (
+    <div className={styles.header}>
+      <div className={styles.info}>
+        <Avatar
+          name={displayName}
+          email={otherUser.email}
+          photoURL={otherUser.photoURL}
+          size="small"
+        />
+        <div className={styles.infoText}>
+          <div className={styles.name}>{displayName}</div>
+          <div className={styles.status}>{otherUser.email}</div>
+        </div>
+      </div>
+
+      {searchOpen && !selectionMode && (
+        <div className={styles.searchBar}>
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => onSearchQueryChange(e.target.value)}
+            placeholder="Search in chat…"
+            className={styles.searchInput}
+            autoFocus
+          />
+          {searchQuery.trim() && (
+            <span className={styles.searchCount}>
+              {searchMatchCount > 0
+                ? `${searchMatchIndex + 1} / ${searchMatchCount}`
+                : '0 results'}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onSearchPrev}
+            disabled={searchMatchCount === 0}
+            className={styles.btn}
+            title="Previous"
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            onClick={onSearchNext}
+            disabled={searchMatchCount === 0}
+            className={styles.btn}
+            title="Next"
+          >
+            ↓
+          </button>
+        </div>
+      )}
+
+      <div className={styles.actions}>
+        {selectionMode ? (
+          <>
+            <span className={styles.selectionInfo}>
+              {selectedCount} / {messagesCount}
+            </span>
+            <button type="button" onClick={onSelectAll} className={styles.btn}>
+              All
+            </button>
+            <button
+              type="button"
+              onClick={onDeleteSelected}
+              disabled={selectedCount === 0}
+              className={`${styles.btn} ${styles.btnDanger}`}
+            >
+              Delete
+            </button>
+            <button type="button" onClick={onClearSelection} className={styles.btn}>
+              Cancel
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={onToggleSearch}
+              className={`${styles.btn} ${searchOpen ? styles.btnActive : ''}`}
+              title="Search messages"
+            >
+              Search
+            </button>
+            <button type="button" onClick={onShowBackground} className={styles.btn} title="Background">
+              Background
+            </button>
+            <button type="button" onClick={onToggleSelection} className={styles.btn}>
+              Select
+            </button>
+          </>
+        )}
+      </div>
+      {isMobile && onBack && (
+        <button type="button" onClick={onBack} className={styles.btn}>
+          Back
+        </button>
+      )}
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\headers\ChatWindowHeader\ChatWindowHeader.module.css ===
+.header {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+  background: var(--bg-card);
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.infoText {
+  min-width: 0;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex: 1;
+  min-width: 160px;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  background: var(--bg-primary);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.searchCount {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.btnActive {
+  border-color: var(--accent-primary);
+  background: var(--bg-tertiary);
+}
+
+.name {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.selectionInfo {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.btn {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  padding: 6px 12px;
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.btn:hover {
+  border-color: var(--color-black);
+}
+
+.btnDanger {
+  color: var(--error);
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: var(--error-bg);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\EmailInput\EmailInput.jsx ===
+import styles from './EmailInput.module.css';
+
+export default function EmailInput({ value, onChange, label = 'Email' }) {
+  return (
+    <div className={styles.field}>
+      <label className={styles.label}>{label}</label>
+      <input
+        type="email"
+        placeholder="you@example.com"
+        value={value}
+        onChange={onChange}
+        required
+        className={styles.input}
+      />
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\EmailInput\EmailInput.module.css ===
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input::placeholder {
+  color: var(--text-dim);
+}
+
+.input:hover {
+  border-color: var(--border-primary);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-black);
+  box-shadow: var(--shadow-md);
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\MessageInput\MessageInput.jsx ===
+import PinFile from '../../buttons/PinFile/PinFile';
+import SendMessageBtn from '../../buttons/SendMessageBtn/SendMessageBtn';
+import styles from './MessageInput.module.css';
+
+export default function MessageInput({
+  text,
+  onTextChange,
+  onKeyDown,
+  onSend,
+  sending,
+  replyTo,
+  otherUserEmail,
+  onCancelReply,
+  pendingFiles,
+  pendingCount,
+  fileInputRef,
+  generalInputRef,
+  uploading,
+  onImageSelect,
+  onFileSelect,
+  inputRef
+}) {
+  return (
+    <div className={styles.area}>
+      <PinFile
+        fileInputRef={fileInputRef}
+        generalInputRef={generalInputRef}
+        uploading={uploading}
+        onImageSelect={onImageSelect}
+        onFileSelect={onFileSelect}
+      />
+      <div className={styles.wrapper}>
+        {replyTo && (
+          <div className={styles.reply}>
+            <span>
+              <span className={styles.replyFrom}>Reply</span>
+              <span className={styles.replyText}>
+                {replyTo.fromName || otherUserEmail}
+                {replyTo.text && ` · ${replyTo.text.substring(0, 40)}…`}
+              </span>
+            </span>
+            <button type="button" onClick={onCancelReply} className={styles.replyCancel} aria-label="Cancel reply">
+              ×
+            </button>
+          </div>
+        )}
+        <input
+          ref={inputRef}
+          type="text"
+          value={text}
+          onChange={onTextChange}
+          onKeyDown={onKeyDown}
+          placeholder={pendingFiles.length > 0 ? `${pendingFiles.length} file(s) attached` : 'Write a message…'}
+          className={styles.input}
+        />
+      </div>
+      <SendMessageBtn
+        onClick={onSend}
+        disabled={sending || (!text.trim() && pendingCount === 0)}
+        sending={sending}
+        pendingCount={pendingCount}
+      />
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\MessageInput\MessageInput.module.css ===
+.area {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: 1px solid var(--border-secondary);
+  background: var(--bg-card);
+}
+
+.wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.reply {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+}
+
+.replyFrom {
+  font-weight: 600;
+}
+
+.replyText {
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+
+.replyCancel {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--text-muted);
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  background: var(--color-white);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-black);
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\PasswordInput\PasswordInput.jsx ===
+import styles from './PasswordInput.module.css';
+
+export default function PasswordInput({
+  value,
+  onChange,
+  label = 'Password',
+  minLength = 6,
+  placeholder = '••••••'
+}) {
+  return (
+    <div className={styles.field}>
+      <label className={styles.label}>{label}</label>
+      <input
+        type="password"
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        required
+        minLength={minLength}
+        className={styles.input}
+      />
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\PasswordInput\PasswordInput.module.css ===
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-black);
+  box-shadow: var(--shadow-md);
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\PasswordInput\RepeatPassword.jsx ===
+import PasswordInput from './PasswordInput';
+import styles from './RepeatPassword.module.css';
+
+export default function RepeatPassword({ value, onChange, password }) {
+  const mismatch = value && password && value !== password;
+
+  return (
+    <>
+      <PasswordInput
+        value={value}
+        onChange={onChange}
+        label="Confirm password"
+        placeholder="••••••"
+      />
+      {mismatch && <p className={styles.mismatch}>Passwords do not match</p>}
+    </>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\PasswordInput\RepeatPassword.module.css ===
+.mismatch {
+  margin-top: -4px;
+  font-size: var(--font-size-sm);
+  color: var(--error);
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\PhoneInput\PhoneInput.jsx ===
+import styles from './PhoneInput.module.css';
+
+export function normalizePhone(value) {
+  return value.replace(/[^\d+]/g, '');
+}
+
+export function isValidPhone(value) {
+  const digits = value.replace(/\D/g, '');
+  return digits.length >= 10 && digits.length <= 15;
+}
+
+export default function PhoneInput({ value, onChange, label = 'Phone', required = false }) {
+  return (
+    <div className={styles.field}>
+      <label className={styles.label}>{label}</label>
+      <input
+        type="tel"
+        placeholder="+7 900 123-45-67"
+        value={value}
+        onChange={onChange}
+        required={required}
+        className={styles.input}
+        autoComplete="tel"
+      />
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\PhoneInput\PhoneInput.module.css ===
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input::placeholder {
+  color: var(--text-dim);
+}
+
+.input:hover {
+  border-color: var(--border-primary);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-black);
+  box-shadow: var(--shadow-md);
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\TextInput\TextInput.jsx ===
+import styles from './TextInput.module.css';
+
+export default function TextInput({
+  value,
+  onChange,
+  label,
+  placeholder,
+  autoComplete,
+  required = true
+}) {
+  return (
+    <div className={styles.field}>
+      <label className={styles.label}>{label}</label>
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        required={required}
+        autoComplete={autoComplete}
+        className={styles.input}
+      />
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\inputs\TextInput\TextInput.module.css ===
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input::placeholder {
+  color: var(--text-dim);
+}
+
+.input:hover {
+  border-color: var(--border-primary);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-black);
+  box-shadow: var(--shadow-md);
+}
+
+=== ФАЙЛ: C:\mess\src\components\lists\ChatList\ChatList.jsx ===
+import { useEffect, useState } from 'react';
+import { getChatsFromStorage } from '../../../services/chatService';
+import { getUserById, toChatUser, formatUserName } from '../../../services/userService';
+import ChatTile from '../ChatTile/ChatTile';
+import styles from './ChatList.module.css';
+
+async function enrichChatsFromProfiles(chats) {
+  return Promise.all(
+    chats.map(async (chat) => {
+      const user = await getUserById(chat.otherUserId);
+      if (!user) return chat;
+      return {
+        ...chat,
+        otherUserFirstName: user.firstName || chat.otherUserFirstName || '',
+        otherUserLastName: user.lastName || chat.otherUserLastName || '',
+        otherUserName: formatUserName(user),
+        otherUserPhotoURL: user.photoURL || chat.otherUserPhotoURL || ''
+      };
+    })
+  );
+}
+
+export default function ChatList({ currentUserId, onSelectChat }) {
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadChats = async () => {
+      const stored = getChatsFromStorage(currentUserId);
+      const enriched = await enrichChatsFromProfiles(stored);
+      if (!cancelled) {
+        setChats(enriched);
+        setLoading(false);
+      }
+    };
+
+    loadChats();
+
+    const handleStorageChange = (e) => {
+      if (e.key === `messenger_chats_${currentUserId}` && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          enrichChatsFromProfiles(parsed).then((enriched) => {
+            if (!cancelled) setChats(enriched);
+          });
+        } catch (error) {
+          console.error('Parse storage error:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(async () => {
+      const stored = getChatsFromStorage(currentUserId);
+      const enriched = await enrichChatsFromProfiles(stored);
+      if (!cancelled) setChats(enriched);
+    }, 2000);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [currentUserId]);
+
+  const handleChatSelect = async (chat) => {
+    const initialUnreadCount = chat.unreadCount ?? 0;
+    const user = await getUserById(chat.otherUserId);
+    if (user) {
+      onSelectChat({
+        ...toChatUser(user),
+        initialUnreadCount
+      });
+    }
+    setChats((prev) =>
+      prev.map((c) => (c.otherUserId === chat.otherUserId ? { ...c, unreadCount: 0 } : c))
+    );
+  };
+
+  const totalUnread = chats.reduce((sum, chat) => sum + chat.unreadCount, 0);
+
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>Loading chats…</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <span className={styles.title}>Chats</span>
+        {totalUnread > 0 && <span className={styles.badge}>{totalUnread}</span>}
+      </div>
+      <div className={styles.content}>
+        {chats.length === 0 ? (
+          <div className={styles.empty}>No conversations yet. Search for someone to start.</div>
+        ) : (
+          <div className={styles.list}>
+            {chats.map((chat) => (
+              <ChatTile key={chat.otherUserId} chat={chat} onSelect={handleChatSelect} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\lists\ChatList\ChatList.module.css ===
+.container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.badge {
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-sm);
+}
+
+.empty {
+  padding: var(--spacing-2xl);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.loading {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+=== ФАЙЛ: C:\mess\src\components\lists\ChatTile\ChatTile.jsx ===
+import Avatar from '../../avatars/Avatar';
+import { formatUserName } from '../../../services/userService';
+import styles from './ChatTile.module.css';
+
+export default function ChatTile({ chat, onSelect }) {
+  const displayName = formatUserName({
+    firstName: chat.otherUserFirstName,
+    lastName: chat.otherUserLastName,
+    name: chat.otherUserName,
+    email: chat.otherUserEmail
+  });
+
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const hours = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60));
+    if (hours < 1) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    if (hours < 24) return `${hours}h`;
+    return date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+  };
+
+  const truncate = (text, max = 36) => {
+    if (!text) return '';
+    return text.length <= max ? text : `${text.substring(0, max)}…`;
+  };
+
+  return (
+    <div
+      className={`${styles.tile} ${chat.unreadCount > 0 ? styles.unread : ''}`}
+      onClick={() => onSelect(chat)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onSelect(chat)}
+    >
+      <div className={styles.content}>
+        <Avatar
+          name={displayName}
+          email={chat.otherUserEmail}
+          photoURL={chat.otherUserPhotoURL}
+          size="small"
+        />
+        <div className={styles.main}>
+          <div className={styles.name}>{displayName}</div>
+          {chat.lastMessage && <div className={styles.preview}>{truncate(chat.lastMessage)}</div>}
+        </div>
+        <div className={styles.meta}>
+          {chat.lastMessageTime && <span className={styles.time}>{formatTime(chat.lastMessageTime)}</span>}
+          {chat.unreadCount > 0 && <span className={styles.unreadBadge}>{chat.unreadCount}</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\lists\ChatTile\ChatTile.module.css ===
+.tile {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tile:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-secondary);
+}
+
+.tile.unread {
+  background: var(--bg-secondary);
+  border-color: var(--border-secondary);
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.tile.unread .name {
+  font-weight: 600;
+}
+
+.preview {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.time {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.unreadBadge {
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+=== ФАЙЛ: C:\mess\src\components\messages\incomingMessage\IncomingMessage.jsx ===
+import { formatFileSize, getFileIcon } from '../../../services/chatService';
+import styles from './IncomingMessage.module.css';
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightText(text, query) {
+  if (!query || !text) return text;
+  const parts = text.split(new RegExp(`(${escapeRegExp(query)})`, 'gi'));
+  return parts.map((part, index) =>
+    part.toLowerCase() === query.toLowerCase() ? (
+      <mark key={index} className={styles.highlight}>
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+}
+
+export default function IncomingMessage({
+  msg,
+  replyFromName,
+  selectionMode,
+  isSelected,
+  isOwn = false,
+  onContextMenu,
+  onToggleSelect,
+  onImageClick,
+  highlightQuery = ''
+}) {
+  return (
+    <div
+      className={`${styles.message} ${isOwn ? styles.own : ''} ${isSelected ? styles.selected : ''}`}
+      onContextMenu={onContextMenu}
+      onClick={() => selectionMode && msg.id && onToggleSelect(msg.id)}
+    >
+      {selectionMode && (
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => msg.id && onToggleSelect(msg.id)}
+          className={styles.checkbox}
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
+      <div className={styles.bubble}>
+        {msg.replyTo && (
+          <div className={styles.reply}>
+            <span className={styles.replyFrom}>Reply · {replyFromName}</span>
+            {msg.replyTo.text && <span>{msg.replyTo.text.substring(0, 80)}…</span>}
+          </div>
+        )}
+        {msg.imageUrls?.map((url, idx) => (
+          <div key={idx} className={styles.image}>
+            <img src={url} alt="" onClick={() => onImageClick(url)} />
+          </div>
+        ))}
+        {msg.imageUrl && !msg.imageUrls && (
+          <div className={styles.image}>
+            <img src={msg.imageUrl} alt="" onClick={() => onImageClick(msg.imageUrl)} />
+          </div>
+        )}
+        {msg.files?.map((file, idx) => (
+          <a key={idx} href={file.url} target="_blank" rel="noopener noreferrer" className={styles.fileLink}>
+            <span>{getFileIcon(file.type, file.name)}</span>
+            <span className={styles.fileName}>{file.name}</span>
+            {file.size && <span className={styles.fileSize}>{formatFileSize(file.size)}</span>}
+          </a>
+        ))}
+        {msg.fileUrl && !msg.files && (
+          <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className={styles.fileLink}>
+            <span>{getFileIcon(msg.fileType || '', msg.fileName)}</span>
+            <span className={styles.fileName}>{msg.fileName || 'File'}</span>
+          </a>
+        )}
+        {msg.text && (
+          <div className={styles.text}>
+            {highlightQuery ? highlightText(msg.text, highlightQuery) : msg.text}
+            {msg.editedAt && <span className={styles.edited}> (edited)</span>}
+          </div>
+        )}
+        <div className={styles.time}>
+          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\messages\incomingMessage\IncomingMessage.module.css ===
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  max-width: 85%;
+}
+
+.message.own {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+  margin-left: auto;
+}
+
+.selected .bubble {
+  outline: 1px solid var(--color-black);
+  outline-offset: 2px;
+}
+
+.checkbox {
+  margin-top: 8px;
+  accent-color: var(--color-black);
+}
+
+.bubble {
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-message-incoming);
+  border: 1px solid var(--border-secondary);
+  box-shadow: var(--shadow-sm);
+  max-width: 100%;
+}
+
+.own .bubble {
+  background: var(--bg-message-outgoing);
+  color: var(--text-on-accent);
+  border-color: var(--color-black);
+}
+
+.own .reply {
+  border-left-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-on-accent);
+}
+
+.own .fileLink {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--text-on-accent);
+}
+
+.own .time {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.own .edited {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.image img {
+  max-width: 220px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-secondary);
+  cursor: pointer;
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
+
+.images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.fileLink {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.fileName {
+  font-weight: 500;
+}
+
+.fileSize {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.text {
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.highlight {
+  background: #fef08a;
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.own .highlight {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.edited {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.reply {
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  border-left: 2px solid var(--color-black);
+  background: var(--bg-secondary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: var(--font-size-xs);
+}
+
+.replyFrom {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.time {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  text-align: right;
+}
+
+=== ФАЙЛ: C:\mess\src\components\messages\outgoingMessage\OutgoingMessage.jsx ===
+import IncomingMessage from '../incomingMessage/IncomingMessage';
+
+export default function OutgoingMessage(props) {
+  return <IncomingMessage {...props} isOwn />;
+}
+
+=== ФАЙЛ: C:\mess\src\components\messages\outgoingMessage\OutgoingMessage.module.css ===
+/* Outgoing uses IncomingMessage styles with isOwn prop */
+
+=== ФАЙЛ: C:\mess\src\components\windows\ChatWindow\ChatWindow.jsx ===
+import { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  sendMessage,
+  listenMessages,
+  updateChatInStorage,
+  incrementUnreadInStorage,
+  uploadImage,
+  uploadFile,
+  sendMultipleFilesMessage,
+  deleteMessage,
+  editMessage,
+  deleteMessages,
+  sendImageMessage,
+  sendFileMessage,
+  saveChatBackground,
+  listenChatBackground
+} from '../../../services/chatService';
+import { formatUserName } from '../../../services/userService';
+import ChatWindowHeader from '../../headers/ChatWindowHeader/ChatWindowHeader';
+import MessagesArea from '../MessagesArea/MessagesArea';
+import MessageInput from '../../inputs/MessageInput/MessageInput';
+import styles from './ChatWindow.module.css';
+
+function getFirstUnreadIndex(messages, currentUserId, unreadCount) {
+  if (unreadCount <= 0) return -1;
+  let incomingFromEnd = 0;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].fromId !== currentUserId) {
+      incomingFromEnd += 1;
+      if (incomingFromEnd === unreadCount) return i;
+    }
+  }
+  return -1;
+}
+
+function scrollChatToBottom(container, endRef) {
+  endRef?.current?.scrollIntoView({ block: 'end' });
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function isNearBottom(container, threshold = 80) {
+  if (!container) return true;
+  return container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
+}
+
+export default function ChatWindow({
+  otherUser,
+  currentUser,
+  initialUnreadCount = 0,
+  isMobile = false,
+  onBack
+}) {
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null);
+  const [editModal, setEditModal] = useState(null);
+  const [replyTo, setReplyTo] = useState(null);
+  const [editText, setEditText] = useState('');
+  const [selectedMessages, setSelectedMessages] = useState(new Set());
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState([]);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [chatBackground, setChatBackground] = useState(null);
+  const [showBackgroundModal, setShowBackgroundModal] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchMatchIndex, setSearchMatchIndex] = useState(0);
+
+  const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const fileInputGeneralRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const prevMessageCountRef = useRef(0);
+  const initialScrollDoneRef = useRef(false);
+  const entryUnreadRef = useRef(initialUnreadCount);
+  const lastSeenMessageCountRef = useRef(0);
+  const editInputRef = useRef(null);
+  const chatId = [currentUser.uid, otherUser.uid].sort().join('_');
+
+  useEffect(() => {
+    setMessages([]);
+    const unsubscribe = listenMessages(currentUser.uid, otherUser.uid, (newMessages) => {
+      if (newMessages.length > prevMessageCountRef.current) {
+        const lastMessage = newMessages[newMessages.length - 1];
+        const isFromMe = lastMessage.fromId === currentUser.uid;
+        updateChatInStorage(
+          currentUser.uid,
+          otherUser.uid,
+          lastMessage.text,
+          isFromMe,
+          otherUser
+        );
+        if (!isFromMe && document.hidden) {
+          incrementUnreadInStorage(currentUser.uid, otherUser.uid);
+        }
+      }
+      setMessages(newMessages);
+      prevMessageCountRef.current = newMessages.length;
+    });
+    return unsubscribe;
+  }, [currentUser, otherUser]);
+
+  useEffect(() => {
+    return listenChatBackground(chatId, setChatBackground);
+  }, [chatId]);
+
+  useEffect(() => {
+    entryUnreadRef.current = initialUnreadCount;
+    initialScrollDoneRef.current = false;
+    prevMessageCountRef.current = 0;
+    lastSeenMessageCountRef.current = 0;
+    setSearchOpen(false);
+    setSearchQuery('');
+    setSearchMatchIndex(0);
+  }, [otherUser.uid, initialUnreadCount]);
+
+  const searchMatchIndices = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return [];
+    return messages.reduce((indices, msg, index) => {
+      if (msg.text?.toLowerCase().includes(query)) indices.push(index);
+      return indices;
+    }, []);
+  }, [messages, searchQuery]);
+
+  const activeSearchMatchIndex =
+    searchMatchIndices.length > 0
+      ? searchMatchIndices[Math.min(searchMatchIndex, searchMatchIndices.length - 1)]
+      : -1;
+
+  useEffect(() => {
+    if (activeSearchMatchIndex < 0) return;
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const node = container.querySelector(`[data-message-index="${activeSearchMatchIndex}"]`);
+    node?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [activeSearchMatchIndex, searchQuery]);
+
+  useEffect(() => {
+    setSearchMatchIndex(0);
+  }, [searchQuery, otherUser.uid]);
+
+  const firstUnreadIndex = useMemo(
+    () => getFirstUnreadIndex(messages, currentUser.uid, entryUnreadRef.current),
+    [messages, currentUser.uid]
+  );
+
+  useEffect(() => {
+    if (searchOpen || messages.length === 0) return;
+
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    let cancelled = false;
+    let resizeObserver;
+
+    const applyScroll = () => {
+      if (cancelled || searchOpen) return;
+      scrollChatToBottom(container, messagesEndRef);
+      setShowScrollButton(false);
+    };
+
+    applyScroll();
+    const raf1 = requestAnimationFrame(applyScroll);
+    const raf2 = requestAnimationFrame(() => requestAnimationFrame(applyScroll));
+
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(applyScroll);
+      resizeObserver.observe(container);
+    }
+
+    const timer = setTimeout(() => {
+      applyScroll();
+      initialScrollDoneRef.current = true;
+      lastSeenMessageCountRef.current = messages.length;
+      resizeObserver?.disconnect();
+    }, 200);
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      clearTimeout(timer);
+      resizeObserver?.disconnect();
+    };
+  }, [otherUser.uid, messages.length, searchOpen]);
+
+  useEffect(() => {
+    if (searchOpen || !initialScrollDoneRef.current || messages.length === 0) return;
+
+    const container = messagesContainerRef.current;
+    const prevLen = lastSeenMessageCountRef.current;
+    const currentLen = messages.length;
+    lastSeenMessageCountRef.current = currentLen;
+
+    if (currentLen <= prevLen) return;
+
+    const lastMessage = messages[currentLen - 1];
+    const shouldScroll =
+      lastMessage.fromId === currentUser.uid || isNearBottom(container);
+
+    if (shouldScroll) {
+      requestAnimationFrame(() => {
+        scrollChatToBottom(container, messagesEndRef);
+        setShowScrollButton(false);
+      });
+    }
+  }, [messages, searchOpen, currentUser.uid]);
+
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      setShowScrollButton(scrollHeight - scrollTop - clientHeight >= 100);
+    };
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleClick = () => contextMenu && setContextMenu(null);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [contextMenu]);
+
+  const addFiles = async (files) => {
+    const newPending = files.map((file) => ({
+      file,
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+      uploading: false,
+      uploaded: false
+    }));
+    setPendingFiles((prev) => [...prev, ...newPending]);
+  };
+
+  const sendAllPendingFiles = async () => {
+    const filesToSend = pendingFiles.filter((pf) => !pf.uploaded && !pf.uploading);
+    if (!filesToSend.length) return;
+
+    const results = await Promise.all(
+      filesToSend.map(async (pf) => {
+        setPendingFiles((prev) =>
+          prev.map((p) => (p.file === pf.file ? { ...p, uploading: true } : p))
+        );
+        try {
+          const isImage = pf.file.type.startsWith('image/');
+          const url = isImage
+            ? await uploadImage(pf.file, currentUser.uid, otherUser.uid)
+            : (await uploadFile(pf.file, currentUser.uid, otherUser.uid)).url;
+          return { file: pf.file, url, isImage, error: null };
+        } catch {
+          return { file: pf.file, url: '', isImage: false, error: 'Upload failed' };
+        }
+      })
+    );
+
+    const successful = results.filter((r) => r.url && !r.error);
+    if (successful.length) {
+      const replyData = replyTo
+        ? {
+            messageId: replyTo.messageId,
+            text: replyTo.text,
+            fromId: replyTo.fromId,
+            fromName: replyTo.fromName
+          }
+        : undefined;
+      await sendMultipleFilesMessage(
+        currentUser.uid,
+        otherUser.uid,
+        text,
+        successful,
+        replyData
+      );
+      setText('');
+      setReplyTo(null);
+      setPendingFiles((prev) => prev.filter((pf) => results.find((r) => r.file === pf.file && r.error)));
+    }
+  };
+
+  const handleSend = async () => {
+    const hasText = text.trim();
+    const hasFiles = pendingFiles.filter((pf) => !pf.uploaded && !pf.uploading).length > 0;
+    if ((!hasText && !hasFiles) || sending) return;
+
+    setSending(true);
+    try {
+      if (hasFiles) {
+        await sendAllPendingFiles();
+      } else if (hasText) {
+        const messageText = text;
+        setText('');
+        const replyData = replyTo
+          ? {
+              messageId: replyTo.messageId,
+              text: replyTo.text,
+              fromId: replyTo.fromId,
+              fromName: replyTo.fromName
+            }
+          : undefined;
+        setReplyTo(null);
+        await sendMessage(currentUser.uid, otherUser.uid, messageText, replyData);
+      }
+    } catch (error) {
+      console.error('Error sending:', error);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleContextMenu = (e, message) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      messageId: message.id || '',
+      messageText: message.text || '',
+      chatId
+    });
+  };
+
+  const handlePaste = async (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const files = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].kind === 'file') {
+        const file = items[i].getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length) {
+      e.preventDefault();
+      await addFiles(files);
+    }
+  };
+
+  const bgStyle = chatBackground
+    ? {
+        background: chatBackground.type === 'gradient' ? chatBackground.value : undefined,
+        backgroundColor: chatBackground.type === 'color' ? chatBackground.value : undefined,
+        backgroundImage:
+          chatBackground.type === 'image' ? `url(${chatBackground.value})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }
+    : undefined;
+
+  const pendingCount = pendingFiles.filter((pf) => !pf.uploaded && !pf.uploading).length;
+
+  return (
+    <div
+      className={styles.container}
+      style={bgStyle}
+      onPaste={handlePaste}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsDragOver(true);
+      }}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={async (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length) await addFiles(files);
+      }}
+    >
+      {isDragOver && <div className={styles.dropOverlay}>Drop files to send</div>}
+
+      <ChatWindowHeader
+        otherUser={otherUser}
+        isMobile={isMobile}
+        onBack={onBack}
+        selectionMode={selectionMode}
+        selectedCount={selectedMessages.size}
+        messagesCount={messages.length}
+        onSelectAll={() =>
+          setSelectedMessages(new Set(messages.map((m) => m.id).filter(Boolean)))
+        }
+        onDeleteSelected={async () => {
+          if (!selectedMessages.size) return;
+          await deleteMessages(chatId, Array.from(selectedMessages));
+          setSelectedMessages(new Set());
+          setSelectionMode(false);
+        }}
+        onClearSelection={() => {
+          setSelectedMessages(new Set());
+          setSelectionMode(false);
+        }}
+        onToggleSelection={() => {
+          setSelectionMode(!selectionMode);
+          setSelectedMessages(new Set());
+        }}
+        onShowBackground={() => setShowBackgroundModal(true)}
+        searchOpen={searchOpen}
+        searchQuery={searchQuery}
+        searchMatchCount={searchMatchIndices.length}
+        searchMatchIndex={
+          searchMatchIndices.length
+            ? Math.min(searchMatchIndex, searchMatchIndices.length - 1)
+            : 0
+        }
+        onToggleSearch={() => {
+          setSearchOpen((open) => {
+            if (open) {
+              setSearchQuery('');
+              setSearchMatchIndex(0);
+            }
+            return !open;
+          });
+        }}
+        onSearchQueryChange={setSearchQuery}
+        onSearchPrev={() => {
+          if (!searchMatchIndices.length) return;
+          setSearchMatchIndex(
+            (prev) => (prev - 1 + searchMatchIndices.length) % searchMatchIndices.length
+          );
+        }}
+        onSearchNext={() => {
+          if (!searchMatchIndices.length) return;
+          setSearchMatchIndex((prev) => (prev + 1) % searchMatchIndices.length);
+        }}
+      />
+
+      <MessagesArea
+        messages={messages}
+        firstUnreadIndex={firstUnreadIndex}
+        currentUser={currentUser}
+        otherUser={otherUser}
+        selectionMode={selectionMode}
+        selectedMessages={selectedMessages}
+        onContextMenu={handleContextMenu}
+        onToggleSelect={(id) => {
+          setSelectedMessages((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+          });
+        }}
+        onImageClick={setSelectedImage}
+        messagesEndRef={messagesEndRef}
+        messagesContainerRef={messagesContainerRef}
+        showScrollButton={showScrollButton}
+        onScrollToBottom={() => {
+          scrollChatToBottom(messagesContainerRef.current, messagesEndRef);
+          setShowScrollButton(false);
+        }}
+        searchQuery={searchOpen ? searchQuery : ''}
+        searchMatchIndices={searchOpen ? searchMatchIndices : []}
+        activeSearchMatchIndex={searchOpen ? activeSearchMatchIndex : -1}
+      />
+
+      <MessageInput
+        text={text}
+        onTextChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+          }
+        }}
+        onSend={handleSend}
+        sending={sending}
+        replyTo={replyTo}
+        otherUserEmail={otherUser.email}
+        onCancelReply={() => setReplyTo(null)}
+        pendingFiles={pendingFiles}
+        pendingCount={pendingCount}
+        fileInputRef={fileInputRef}
+        generalInputRef={fileInputGeneralRef}
+        uploading={uploading}
+        onImageSelect={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file?.type.startsWith('image/')) return;
+          setUploading(true);
+          try {
+            const url = await uploadImage(file, currentUser.uid, otherUser.uid);
+            await sendImageMessage(currentUser.uid, otherUser.uid, url);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+          } finally {
+            setUploading(false);
+          }
+        }}
+        onFileSelect={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          setUploading(true);
+          try {
+            const { url } = await uploadFile(file, currentUser.uid, otherUser.uid);
+            await sendFileMessage(
+              currentUser.uid,
+              otherUser.uid,
+              url,
+              file.name,
+              file.type || 'application/octet-stream',
+              file.size
+            );
+            if (fileInputGeneralRef.current) fileInputGeneralRef.current.value = '';
+          } finally {
+            setUploading(false);
+          }
+        }}
+        inputRef={inputRef}
+      />
+
+      {contextMenu && (
+        <div className={styles.menu} style={{ top: contextMenu.y, left: contextMenu.x }}>
+          <button
+            type="button"
+            className={styles.menuItem}
+            onClick={async () => {
+              await navigator.clipboard.writeText(contextMenu.messageText);
+              setContextMenu(null);
+            }}
+          >
+            Copy
+          </button>
+          <button
+            type="button"
+            className={styles.menuItem}
+            onClick={() => {
+              const message = messages.find((m) => m.id === contextMenu.messageId);
+              setReplyTo({
+                messageId: contextMenu.messageId,
+                text: contextMenu.messageText,
+                fromId: message?.fromId || '',
+                fromName: formatUserName(otherUser)
+              });
+              setContextMenu(null);
+              inputRef.current?.focus();
+            }}
+          >
+            Reply
+          </button>
+          <button
+            type="button"
+            className={styles.menuItem}
+            onClick={() => {
+              setEditModal({ ...contextMenu });
+              setEditText(contextMenu.messageText);
+              setContextMenu(null);
+              setTimeout(() => editInputRef.current?.focus(), 100);
+            }}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            className={`${styles.menuItem} ${styles.menuDanger}`}
+            onClick={async () => {
+              await deleteMessage(contextMenu.chatId, contextMenu.messageId);
+              setContextMenu(null);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
+
+      {editModal && (
+        <div className={styles.overlay} onClick={() => setEditModal(null)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <span>Edit message</span>
+              <button type="button" onClick={() => setEditModal(null)} className={styles.modalClose}>
+                Close
+              </button>
+            </div>
+            <input
+              ref={editInputRef}
+              type="text"
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  editMessage(editModal.chatId, editModal.messageId, editText.trim()).then(() =>
+                    setEditModal(null)
+                  );
+                }
+                if (e.key === 'Escape') setEditModal(null);
+              }}
+              className={styles.editInput}
+            />
+          </div>
+        </div>
+      )}
+
+      {showBackgroundModal && (
+        <div className={styles.overlay} onClick={() => setShowBackgroundModal(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <span>Background</span>
+              <button
+                type="button"
+                onClick={() => setShowBackgroundModal(false)}
+                className={styles.modalClose}
+              >
+                Close
+              </button>
+            </div>
+            <div className={styles.colorGrid}>
+              {[
+                { name: 'White', value: '#ffffff' },
+                { name: 'Light', value: '#f4f4f5' },
+                { name: 'Gray', value: '#e4e4e7' }
+              ].map((color) => (
+                <button
+                  key={color.name}
+                  type="button"
+                  className={styles.colorBtn}
+                  style={{ background: color.value }}
+                  onClick={() => {
+                    saveChatBackground(chatId, { type: 'color', value: color.value });
+                    setShowBackgroundModal(false);
+                  }}
+                >
+                  {color.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedImage && (
+        <div className={styles.overlay} onClick={() => setSelectedImage(null)}>
+          <div className={`${styles.modal} ${styles.imageModal}`} onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setSelectedImage(null)} className={styles.modalClose}>
+              Close
+            </button>
+            <img src={selectedImage} alt="Full size" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\windows\ChatWindow\ChatWindow.module.css ===
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg-card);
+  position: relative;
+}
+
+.dropOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border: 1px dashed var(--border-primary);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.menu {
+  position: fixed;
+  z-index: 2000;
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  min-width: 120px;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+}
+
+.menuItem:hover {
+  background: var(--bg-secondary);
+}
+
+.menuDanger {
+  color: var(--error);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: var(--spacing-lg);
+}
+
+.modal {
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 440px;
+  width: 100%;
+  padding: var(--spacing-lg);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.modalClose {
+  font-size: var(--font-size-xs);
+  padding: 4px 10px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.modalClose:hover {
+  border-color: var(--color-black);
+}
+
+.editInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.editInput:focus {
+  outline: none;
+  border-color: var(--color-black);
+}
+
+.colorGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.colorBtn {
+  padding: 8px 14px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  box-shadow: var(--shadow-sm);
+}
+
+.colorBtn:hover {
+  border-color: var(--color-black);
+}
+
+.imageModal img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-secondary);
+}
+
+=== ФАЙЛ: C:\mess\src\components\windows\MessagesArea\MessagesArea.jsx ===
+import IncomingMessage from '../../messages/incomingMessage/IncomingMessage';
+import OutgoingMessage from '../../messages/outgoingMessage/OutgoingMessage';
+import ScrollToBottomBtn from '../../buttons/ScrollToBottomBtn/ScrollToBottomBtn';
+import styles from './MessagesArea.module.css';
+
+export default function MessagesArea({
+  messages,
+  firstUnreadIndex = -1,
+  currentUser,
+  otherUser,
+  selectionMode,
+  selectedMessages,
+  onContextMenu,
+  onToggleSelect,
+  onImageClick,
+  messagesEndRef,
+  messagesContainerRef,
+  showScrollButton,
+  onScrollToBottom,
+  searchQuery = '',
+  searchMatchIndices = [],
+  activeSearchMatchIndex = -1
+}) {
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  return (
+    <div className={styles.area} ref={messagesContainerRef}>
+      {messages.length === 0 ? (
+        <div className={styles.empty}>No messages yet</div>
+      ) : normalizedQuery && searchMatchIndices.length === 0 ? (
+        <div className={styles.empty}>No messages match your search</div>
+      ) : (
+        <div className={styles.messages}>
+          {messages.map((msg, index) => {
+            const isOwn = msg.fromId === currentUser.uid;
+            const isSelected = selectedMessages.has(msg.id || '');
+            const isSearchMatch = searchMatchIndices.includes(index);
+            const isActiveMatch = index === activeSearchMatchIndex;
+            const replyFromName =
+              msg.replyTo?.fromId === currentUser.uid
+                ? currentUser.email
+                : msg.replyTo?.fromName || otherUser.email;
+            const MessageComponent = isOwn ? OutgoingMessage : IncomingMessage;
+            return (
+              <div
+                key={msg.id || index}
+                data-message-index={index}
+                className={isActiveMatch ? styles.activeMatch : undefined}
+              >
+                {index === firstUnreadIndex && (
+                  <div className={styles.unreadDivider}>Непрочитанные сообщения</div>
+                )}
+                <MessageComponent
+                  msg={msg}
+                  replyFromName={replyFromName}
+                  selectionMode={selectionMode}
+                  isSelected={isSelected}
+                  onContextMenu={(e) => !selectionMode && onContextMenu(e, msg)}
+                  onToggleSelect={onToggleSelect}
+                  onImageClick={onImageClick}
+                  highlightQuery={isSearchMatch ? normalizedQuery : ''}
+                />
+              </div>
+            );
+          })}
+          <div ref={messagesEndRef} className={styles.messagesEnd} />
+        </div>
+      )}
+      <ScrollToBottomBtn visible={showScrollButton} onClick={onScrollToBottom} />
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\components\windows\MessagesArea\MessagesArea.module.css ===
+.area {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-height: 0;
+  position: relative;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-height: min-content;
+}
+
+.messagesEnd {
+  flex-shrink: 0;
+  height: 1px;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.unreadDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-md) 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.unreadDivider::before,
+.unreadDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-secondary);
+}
+
+.activeMatch {
+  scroll-margin: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+=== ФАЙЛ: C:\mess\src\context\AuthContext.jsx ===
+import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { auth } from '../config/firebase';
+import { checkUserExists, createUserProfile, formatUserName, getUserById, updateUserProfile } from '../services/userService';
+
+const AuthContext = createContext(null);
+
+async function buildUserState(firebaseUser) {
+  const profile = (await getUserById(firebaseUser.uid)) || {};
+  const name = formatUserName({ ...profile, email: firebaseUser.email });
+
+  return {
+    ...profile,
+    uid: firebaseUser.uid,
+    email: firebaseUser.email || profile.email || '',
+    displayName: firebaseUser.displayName || undefined,
+    name,
+    firstName: profile.firstName || '',
+    lastName: profile.lastName || '',
+    birthday: profile.birthday || '',
+    bio: profile.bio || '',
+    phone: profile.phone || '',
+    photoURL: profile.photoURL || firebaseUser.photoURL || ''
+  };
+}
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const refreshProfile = useCallback(async () => {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) return;
+    const userData = await buildUserState(firebaseUser);
+    setUser(userData);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        const exists = await checkUserExists(firebaseUser.uid);
+        if (!exists) {
+          const displayName =
+            firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User';
+          await createUserProfile(firebaseUser.uid, firebaseUser.email || '', { name: displayName });
+        }
+        const userData = await buildUserState(firebaseUser);
+        if (userData.email !== firebaseUser.email && firebaseUser.email) {
+          await updateUserProfile(firebaseUser.uid, { email: firebaseUser.email });
+          userData.email = firebaseUser.email;
+        }
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  const logout = async () => {
+    await auth.signOut();
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, loading, logout, setUser, refreshProfile }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+}
+
+=== ФАЙЛ: C:\mess\src\firebase\config.js ===
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+
+const FIREBASE_ENV_KEYS = [
+  'VITE_FIREBASE_API_KEY',
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'VITE_FIREBASE_PROJECT_ID',
+  'VITE_FIREBASE_STORAGE_BUCKET',
+  'VITE_FIREBASE_MESSAGING_SENDER_ID',
+  'VITE_FIREBASE_APP_ID'
+];
+
+const missingEnv = FIREBASE_ENV_KEYS.filter((key) => !import.meta.env[key]);
+if (import.meta.env.DEV && missingEnv.length > 0) {
+  console.error(
+    `[Firebase] Missing: ${missingEnv.join(', ')}. Copy .env.example to .env and paste config from Firebase Console.`
+  );
+}
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+};
+
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+
+=== ФАЙЛ: C:\mess\src\pages\Chat\Chat.jsx ===
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { getUnreadCount, resetUnreadInStorage } from '../../services/chatService';
+import ChatListHeader from '../../components/headers/ChatListHeader/ChatListHeader';
+import ChatList from '../../components/lists/ChatList/ChatList';
+import ChatWindow from '../../components/windows/ChatWindow/ChatWindow';
+import styles from './Chat.module.css';
+
+const MOBILE_BREAKPOINT = 768;
+
+export default function ChatPage() {
+  const { user, logout } = useAuth();
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= MOBILE_BREAKPOINT);
+  const [showSidebar, setShowSidebar] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleSelectUser = (selected) => {
+    const initialUnreadCount =
+      selected.initialUnreadCount ?? getUnreadCount(user.uid, selected.uid);
+    resetUnreadInStorage(user.uid, selected.uid);
+    setSelectedUser({
+      uid: selected.uid,
+      email: selected.email,
+      firstName: selected.firstName || '',
+      lastName: selected.lastName || '',
+      name: selected.name,
+      photoURL: selected.photoURL || '',
+      initialUnreadCount
+    });
+    if (isMobile) setShowSidebar(false);
+  };
+
+  const showChatPanel = isMobile ? selectedUser : true;
+
+  return (
+    <div className={styles.layout}>
+      <ChatListHeader
+        onSelectUser={handleSelectUser}
+        onLogout={async () => {
+          await logout();
+          setSelectedUser(null);
+          setShowSidebar(true);
+        }}
+        isMobile={isMobile}
+        onShowSidebar={() => setShowSidebar(true)}
+      />
+
+      <main className={styles.main}>
+        <aside
+          className={`${styles.sidebar} ${isMobile && !showSidebar ? styles.sidebarHidden : ''}`}
+        >
+          <div className={styles.chats}>
+            <ChatList currentUserId={user.uid} onSelectChat={handleSelectUser} />
+          </div>
+        </aside>
+
+        <section className={styles.chatArea}>
+          {showChatPanel ? (
+            selectedUser ? (
+              <ChatWindow
+                otherUser={selectedUser}
+                currentUser={user}
+                initialUnreadCount={selectedUser.initialUnreadCount ?? 0}
+                isMobile={isMobile}
+                onBack={() => {
+                  setSelectedUser(null);
+                  setShowSidebar(true);
+                }}
+              />
+            ) : (
+              <div className={styles.empty}>Select a conversation or search for someone</div>
+            )
+          ) : (
+            <div className={styles.empty}>Select a conversation</div>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\pages\Chat\Chat.module.css ===
+.layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  height: calc(100vh - 2 * var(--spacing-xl));
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  display: flex;
+  flex: 1;
+  gap: var(--spacing-md);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.chats {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.chatArea {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 768px) {
+  .layout {
+    height: 100vh;
+  }
+
+  .main {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .sidebar {
+    width: 100%;
+    position: absolute;
+    top: var(--header-height);
+    left: 0;
+    bottom: 0;
+    z-index: 10;
+    border-radius: 0;
+  }
+
+  .sidebarHidden {
+    display: none;
+  }
+
+  .chatArea {
+    border-radius: 0;
+    border: none;
+  }
+}
+
+=== ФАЙЛ: C:\mess\src\pages\Login\Login.jsx ===
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../config/firebase';
+import EmailInput from '../../components/inputs/EmailInput/EmailInput';
+import PasswordInput from '../../components/inputs/PasswordInput/PasswordInput';
+import LoginBtn from '../../components/buttons/LoginBtn/LoginBtn';
+import GotoRegisterBtn from '../../components/buttons/gotoRegisterBtn/GotoRegisterBtn';
+import styles from './Login.module.css';
+
+export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate('/');
+    } catch (err) {
+      const messages = {
+        'auth/user-not-found': 'No account with this email. Create one on the register page.',
+        'auth/wrong-password': 'Wrong password',
+        'auth/invalid-email': 'Invalid email',
+        'auth/invalid-credential': 'Incorrect email or password',
+        'auth/invalid-login-credentials': 'Incorrect email or password',
+        'auth/operation-not-allowed':
+          'Email/password sign-in is off. In Firebase Console → Authentication → Sign-in method, enable Email/Password.',
+        'auth/too-many-requests': 'Too many attempts. Wait a few minutes and try again.',
+        'auth/user-disabled': 'This account has been disabled',
+        'auth/missing-password': 'Enter your password',
+        'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
+          'Firebase API key is missing or invalid. Update .env from Firebase Console (or GitHub secrets for the deployed site), then restart the dev server.'
+      };
+      setError(messages[err.code] || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Sign in</h1>
+        </div>
+        <div className={styles.body}>
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <EmailInput value={email} onChange={(e) => setEmail(e.target.value)} />
+            <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} />
+            {error && <div className={styles.error}>{error}</div>}
+            <LoginBtn loading={loading} />
+          </form>
+          <div className={styles.footer}>
+            <GotoRegisterBtn />
+          </div>
+          <p className={styles.footer}>
+            <Link to="/" className={styles.backLink}>
+              Back to app
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\pages\Login\Login.module.css ===
+.page {
+  max-width: 400px;
+  margin: 12vh auto;
+  animation: slide-up 0.35s var(--transition-normal);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.header {
+  padding: var(--spacing-2xl) var(--spacing-xl) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-secondary);
+  text-align: center;
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.body {
+  padding: var(--spacing-xl);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.error {
+  padding: var(--spacing-md);
+  background: var(--error-bg);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: var(--font-size-sm);
+}
+
+.footer {
+  margin-top: var(--spacing-lg);
+  text-align: center;
+}
+
+.backLink {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--text-primary);
+}
+
+=== ФАЙЛ: C:\mess\src\pages\Profile\Profile.jsx ===
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import Avatar from '../../components/avatars/Avatar';
+import { formatUserName } from '../../services/userService';
+import styles from './Profile.module.css';
+
+function formatBirthday(value) {
+  if (!value) return 'Not set';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function displayName(user) {
+  return formatUserName(user);
+}
+
+export default function Profile() {
+  const { user } = useAuth();
+
+  if (!user) return null;
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.hero}>
+        <Avatar
+          name={displayName(user)}
+          email={user.email}
+          photoURL={user.photoURL}
+          size="large"
+        />
+        <div className={styles.heroText}>
+          <h2 className={styles.displayName}>{displayName(user)}</h2>
+          <p className={styles.email}>{user.email}</p>
+        </div>
+      </div>
+
+      <dl className={styles.details}>
+        <div className={styles.detailRow}>
+          <dt>First name</dt>
+          <dd>{user.firstName || '—'}</dd>
+        </div>
+        <div className={styles.detailRow}>
+          <dt>Last name</dt>
+          <dd>{user.lastName || '—'}</dd>
+        </div>
+        <div className={styles.detailRow}>
+          <dt>Birthday</dt>
+          <dd>{formatBirthday(user.birthday)}</dd>
+        </div>
+        <div className={styles.detailRow}>
+          <dt>Phone</dt>
+          <dd>{user.phone || '—'}</dd>
+        </div>
+        <div className={styles.detailRow}>
+          <dt>Bio</dt>
+          <dd>{user.bio || '—'}</dd>
+        </div>
+      </dl>
+
+      <Link to="/profile/settings" className={styles.primaryBtn}>
+        Edit profile
+      </Link>
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\pages\Profile\Profile.module.css ===
+.page {
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  padding: var(--spacing-xl);
+  animation: slide-up 0.35s var(--transition-normal);
+}
+
+.shell {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.topBar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+}
+
+.backLink {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  text-decoration: none;
+  width: fit-content;
+}
+
+.backLink:hover {
+  color: var(--text-primary);
+}
+
+.pageTitle {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.tab {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tabActive {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-primary);
+}
+
+.content {
+  min-height: 200px;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-xl);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.displayName {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+}
+
+.email {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.detailRow {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.detailRow dt {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.detailRow dd {
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.avatarSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.avatarActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.fileInput {
+  display: none;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.field label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.field input,
+.field textarea {
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-family: inherit;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.field input:disabled {
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.error {
+  padding: var(--spacing-md);
+  background: var(--error-bg);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: var(--font-size-sm);
+}
+
+.success {
+  padding: var(--spacing-md);
+  background: #f0fdf4;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--success);
+  font-size: var(--font-size-sm);
+}
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--transition-fast);
+}
+
+.primaryBtn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondaryBtn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.secondaryBtn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+}
+
+.secondaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.textBtn {
+  background: none;
+  border: none;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.textBtn:hover {
+  color: var(--error);
+}
+
+.accountSection {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--border-secondary);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin-bottom: var(--spacing-lg);
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: var(--spacing-md);
+  }
+
+  .detailRow {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xs);
+  }
+}
+
+=== ФАЙЛ: C:\mess\src\pages\Profile\ProfileLayout.jsx ===
+import { NavLink, Outlet, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import styles from './Profile.module.css';
+
+export default function ProfileLayout() {
+  const { user } = useAuth();
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.shell}>
+        <header className={styles.topBar}>
+          <Link to="/" className={styles.backLink}>
+            ← Messages
+          </Link>
+          <h1 className={styles.pageTitle}>Account</h1>
+        </header>
+
+        <nav className={styles.tabs} aria-label="Profile sections">
+          <NavLink
+            to="/profile"
+            end
+            className={({ isActive }) =>
+              `${styles.tab} ${isActive ? styles.tabActive : ''}`
+            }
+          >
+            Profile
+          </NavLink>
+          <NavLink
+            to="/profile/settings"
+            className={({ isActive }) =>
+              `${styles.tab} ${isActive ? styles.tabActive : ''}`
+            }
+          >
+            Settings
+          </NavLink>
+        </nav>
+
+        <div className={styles.content}>
+          <Outlet context={{ user }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\pages\Profile\ProfileSettings.jsx ===
+import { useState, useRef } from 'react';
+import {
+  updateProfile,
+  verifyBeforeUpdateEmail,
+  EmailAuthProvider,
+  reauthenticateWithCredential
+} from 'firebase/auth';
+import { auth } from '../../config/firebase';
+import { useAuth } from '../../context/AuthContext';
+import { updateUserProfile, formatUserName } from '../../services/userService';
+import { uploadAvatarToCloudinary } from '../../services/cloudinaryService';
+import Avatar from '../../components/avatars/Avatar';
+import { isValidPhone, normalizePhone } from '../../components/inputs/PhoneInput/PhoneInput';
+import styles from './Profile.module.css';
+
+function displayNameFromParts(firstName, lastName, name) {
+  const full = [firstName, lastName].filter(Boolean).join(' ').trim();
+  if (full) return full;
+  return name?.trim() || '';
+}
+
+export default function ProfileSettings() {
+  const { user, refreshProfile } = useAuth();
+  const fileInputRef = useRef(null);
+
+  const [firstName, setFirstName] = useState(user?.firstName || '');
+  const [lastName, setLastName] = useState(user?.lastName || '');
+  const [name, setName] = useState(user?.name || '');
+  const [birthday, setBirthday] = useState(user?.birthday || '');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [newEmail, setNewEmail] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [changingEmail, setChangingEmail] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  if (!user) return null;
+
+  const resolvedName = displayNameFromParts(firstName, lastName, name);
+
+  const savePhotoURL = async (url) => {
+    await updateUserProfile(user.uid, { photoURL: url || '' });
+    if (auth.currentUser) {
+      await updateProfile(auth.currentUser, { photoURL: url || null });
+    }
+    await refreshProfile();
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file');
+      return;
+    }
+    setError('');
+    setSuccess('');
+    setUploading(true);
+    try {
+      const url = await uploadAvatarToCloudinary(file, user.uid);
+      setPhotoURL(url);
+      await savePhotoURL(url);
+      setSuccess('Photo updated');
+    } catch (err) {
+      setError(err.message || 'Failed to upload photo');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    setPhotoURL('');
+    setError('');
+    setSuccess('');
+    setUploading(true);
+    try {
+      await savePhotoURL('');
+      setSuccess('Photo removed');
+    } catch (err) {
+      setError(err.message || 'Failed to remove photo');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleEmailChange = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    const trimmedEmail = newEmail.trim();
+    if (!trimmedEmail) {
+      setError('Enter a new email address');
+      return;
+    }
+    if (trimmedEmail === user.email) {
+      setError('This is already your email');
+      return;
+    }
+    if (!emailPassword) {
+      setError('Enter your current password to change email');
+      return;
+    }
+
+    setChangingEmail(true);
+    try {
+      const credential = EmailAuthProvider.credential(user.email, emailPassword);
+      await reauthenticateWithCredential(auth.currentUser, credential);
+      await verifyBeforeUpdateEmail(auth.currentUser, trimmedEmail);
+      setNewEmail('');
+      setEmailPassword('');
+      setSuccess('Confirmation link sent to your new email. Click it to finish the change.');
+    } catch (err) {
+      const messages = {
+        'auth/wrong-password': 'Incorrect password',
+        'auth/invalid-email': 'Invalid email address',
+        'auth/email-already-in-use': 'Email already in use',
+        'auth/requires-recent-login': 'Please sign out and sign in again, then retry'
+      };
+      setError(messages[err.code] || err.message || 'Failed to change email');
+    } finally {
+      setChangingEmail(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (phone && !isValidPhone(phone)) {
+      setError('Enter a valid phone number (10–15 digits)');
+      return;
+    }
+
+    setSaving(true);
+
+    const profileData = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      name: resolvedName || formatUserName({ firstName, lastName, email: user.email }),
+      birthday: birthday || '',
+      bio: bio.trim(),
+      phone: normalizePhone(phone),
+      photoURL: photoURL || ''
+    };
+
+    try {
+      await updateUserProfile(user.uid, profileData);
+
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, {
+          displayName: profileData.name,
+          photoURL: profileData.photoURL || null
+        });
+      }
+
+      await refreshProfile();
+      setSuccess('Profile saved');
+    } catch (err) {
+      setError(err.message || 'Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className={styles.card}>
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <div className={styles.avatarSection}>
+          <Avatar
+            name={resolvedName}
+            email={user.email}
+            photoURL={photoURL}
+            size="large"
+          />
+          <div className={styles.avatarActions}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className={styles.fileInput}
+              onChange={handleAvatarChange}
+              disabled={uploading}
+            />
+            <button
+              type="button"
+              className={styles.secondaryBtn}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? 'Uploading…' : 'Change photo'}
+            </button>
+            {photoURL && (
+              <button
+                type="button"
+                className={styles.textBtn}
+                onClick={handleRemovePhoto}
+                disabled={uploading}
+              >
+                Remove photo
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="firstName">First name</label>
+          <input
+            id="firstName"
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            autoComplete="given-name"
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="lastName">Last name</label>
+          <input
+            id="lastName"
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            autoComplete="family-name"
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="displayName">Display name</label>
+          <input
+            id="displayName"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={displayNameFromParts(firstName, lastName, '') || 'Shown in chats'}
+          />
+          <span className={styles.hint}>
+            Leave empty to use first and last name
+          </span>
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="birthday">Birthday</label>
+          <input
+            id="birthday"
+            type="date"
+            value={birthday}
+            onChange={(e) => setBirthday(e.target.value)}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="bio">Bio</label>
+          <textarea
+            id="bio"
+            rows={3}
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="A few words about you"
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="phone">Phone</label>
+          <input
+            id="phone"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+7 900 123-45-67"
+            autoComplete="tel"
+          />
+        </div>
+
+        {error && <div className={styles.error}>{error}</div>}
+        {success && <div className={styles.success}>{success}</div>}
+
+        <button type="submit" className={styles.primaryBtn} disabled={saving || uploading}>
+          {saving ? 'Saving…' : 'Save profile'}
+        </button>
+      </form>
+
+      <div className={styles.accountSection}>
+        <h3 className={styles.sectionTitle}>Change email</h3>
+        <form className={styles.form} onSubmit={handleEmailChange}>
+          <div className={styles.field}>
+            <label htmlFor="currentEmail">Current email</label>
+            <input id="currentEmail" type="email" value={user.email} disabled />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="newEmail">New email</label>
+            <input
+              id="newEmail"
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="new@example.com"
+              autoComplete="email"
+            />
+          </div>
+          <div className={styles.field}>
+            <label htmlFor="emailPassword">Current password</label>
+            <input
+              id="emailPassword"
+              type="password"
+              value={emailPassword}
+              onChange={(e) => setEmailPassword(e.target.value)}
+              autoComplete="current-password"
+            />
+            <span className={styles.hint}>
+              A confirmation link will be sent to the new address
+            </span>
+          </div>
+          <button
+            type="submit"
+            className={styles.secondaryBtn}
+            disabled={changingEmail || uploading}
+          >
+            {changingEmail ? 'Sending…' : 'Update email'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\pages\Register\Register.jsx ===
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth } from '../../config/firebase';
+import { createUserProfile, formatUserName } from '../../services/userService';
+import EmailInput from '../../components/inputs/EmailInput/EmailInput';
+import TextInput from '../../components/inputs/TextInput/TextInput';
+import PhoneInput, { isValidPhone, normalizePhone } from '../../components/inputs/PhoneInput/PhoneInput';
+import PasswordInput from '../../components/inputs/PasswordInput/PasswordInput';
+import RepeatPassword from '../../components/inputs/PasswordInput/RepeatPassword';
+import LoginBtn from '../../components/buttons/LoginBtn/LoginBtn';
+import styles from './Register.module.css';
+
+export default function Register() {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [repeatPassword, setRepeatPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+
+    if (!trimmedFirstName || !trimmedLastName) {
+      setError('Enter first and last name');
+      return;
+    }
+    if (password !== repeatPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (!isValidPhone(phone)) {
+      setError('Enter a valid phone number (10–15 digits)');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      const profile = {
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
+        phone: normalizePhone(phone)
+      };
+      const displayName = formatUserName(profile);
+      await updateProfile(user, { displayName });
+      await createUserProfile(user.uid, user.email, profile);
+      navigate('/');
+    } catch (err) {
+      const messages = {
+        'auth/email-already-in-use': 'Email already registered',
+        'auth/invalid-email': 'Invalid email',
+        'auth/weak-password': 'Password must be at least 6 characters'
+      };
+      setError(messages[err.code] || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Create account</h1>
+        </div>
+        <div className={styles.body}>
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <TextInput
+              label="First name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="John"
+              autoComplete="given-name"
+            />
+            <TextInput
+              label="Last name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Doe"
+              autoComplete="family-name"
+            />
+            <EmailInput value={email} onChange={(e) => setEmail(e.target.value)} />
+            <PhoneInput value={phone} onChange={(e) => setPhone(e.target.value)} required />
+            <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} />
+            <RepeatPassword
+              value={repeatPassword}
+              onChange={(e) => setRepeatPassword(e.target.value)}
+              password={password}
+            />
+            {error && <div className={styles.error}>{error}</div>}
+            <LoginBtn loading={loading} isLogin={false} />
+          </form>
+          <div className={styles.footer}>
+            <Link to="/login" className={styles.link}>
+              Back to sign in
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\pages\Register\Register.module.css ===
+.page {
+  max-width: 400px;
+  margin: 10vh auto;
+  animation: slide-up 0.35s var(--transition-normal);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.header {
+  padding: var(--spacing-2xl) var(--spacing-xl) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-secondary);
+  text-align: center;
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.body {
+  padding: var(--spacing-xl);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.error {
+  padding: var(--spacing-md);
+  background: var(--error-bg);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: var(--font-size-sm);
+}
+
+.footer {
+  margin-top: var(--spacing-lg);
+  text-align: center;
+}
+
+.link {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  display: inline-block;
+  transition: border-color var(--transition-fast);
+}
+
+.link:hover {
+  border-color: var(--color-black);
+}
+
+.mismatch {
+  margin-top: -8px;
+  font-size: var(--font-size-sm);
+  color: var(--error);
+}
+
+=== ФАЙЛ: C:\mess\src\services\chatService.js ===
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  orderBy,
+  onSnapshot,
+  doc,
+  setDoc,
+  getDoc,
+  deleteDoc,
+  updateDoc
+} from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { getUserById, formatUserName } from './userService';
+import { uploadImageToCloudinary, uploadFileToCloudinary } from './cloudinaryService';
+
+const getStorageKey = (userId) => `messenger_chats_${userId}`;
+
+export const getChatsFromStorage = (userId) => {
+  try {
+    const data = localStorage.getItem(getStorageKey(userId));
+    if (data) return JSON.parse(data);
+  } catch (error) {
+    console.error('Get chats from storage error:', error);
+  }
+  return [];
+};
+
+export const saveChatsToStorage = (userId, chats) => {
+  try {
+    const sorted = chats.sort((a, b) => b.lastMessageTime - a.lastMessageTime);
+    localStorage.setItem(getStorageKey(userId), JSON.stringify(sorted));
+  } catch (error) {
+    console.error('Save chats to storage error:', error);
+  }
+};
+
+export const updateChatInStorage = (
+  userId,
+  otherUserId,
+  lastMessage,
+  isFromMe = false,
+  otherUser = {}
+) => {
+  try {
+    const otherUserEmail = otherUser.email || otherUserId;
+    const otherUserName = formatUserName(otherUser) || otherUserEmail;
+    const otherUserFirstName = otherUser.firstName || '';
+    const otherUserLastName = otherUser.lastName || '';
+    const otherUserPhotoURL = otherUser.photoURL || '';
+
+    const chats = getChatsFromStorage(userId);
+    const chatId = [userId, otherUserId].sort().join('_');
+    const existingChat = chats.find((c) => c.otherUserId === otherUserId);
+
+    if (existingChat) {
+      existingChat.lastMessage = lastMessage;
+      existingChat.lastMessageTime = Date.now();
+      existingChat.otherUserEmail = otherUserEmail;
+      existingChat.otherUserName = otherUserName;
+      existingChat.otherUserFirstName = otherUserFirstName;
+      existingChat.otherUserLastName = otherUserLastName;
+      if (otherUserPhotoURL) existingChat.otherUserPhotoURL = otherUserPhotoURL;
+      if (isFromMe) existingChat.unreadCount = 0;
+    } else {
+      chats.push({
+        id: chatId,
+        otherUserId,
+        otherUserEmail,
+        otherUserName,
+        otherUserFirstName,
+        otherUserLastName,
+        otherUserPhotoURL,
+        lastMessage,
+        lastMessageTime: Date.now(),
+        unreadCount: isFromMe ? 0 : 1
+      });
+    }
+
+    saveChatsToStorage(userId, chats);
+    return chats;
+  } catch (error) {
+    console.error('Update chat in storage error:', error);
+    return [];
+  }
+};
+
+export const incrementUnreadInStorage = (userId, otherUserId) => {
+  try {
+    const chats = getChatsFromStorage(userId);
+    const chat = chats.find((c) => c.otherUserId === otherUserId);
+    if (chat) {
+      chat.unreadCount += 1;
+      saveChatsToStorage(userId, chats);
+    }
+    return chats;
+  } catch (error) {
+    console.error('Increment unread in storage error:', error);
+    return [];
+  }
+};
+
+export const getUnreadCount = (userId, otherUserId) => {
+  const chat = getChatsFromStorage(userId).find((c) => c.otherUserId === otherUserId);
+  return chat?.unreadCount ?? 0;
+};
+
+export const resetUnreadInStorage = (userId, otherUserId) => {
+  try {
+    const chats = getChatsFromStorage(userId);
+    const chat = chats.find((c) => c.otherUserId === otherUserId);
+    if (chat) {
+      chat.unreadCount = 0;
+      saveChatsToStorage(userId, chats);
+    }
+    return chats;
+  } catch (error) {
+    console.error('Reset unread in storage error:', error);
+    return [];
+  }
+};
+
+export const sendMessage = async (fromId, toId, text, replyTo) => {
+  try {
+    const chatId = [fromId, toId].sort().join('_');
+    const messageData = { text, fromId, toId, timestamp: Date.now() };
+    if (replyTo) messageData.replyTo = replyTo;
+
+    await addDoc(collection(db, 'chats', chatId, 'messages'), messageData);
+
+    const toUser = await getUserById(toId);
+    updateChatInStorage(fromId, toId, text, true, toUser || { email: toId });
+
+    const fromUser = await getUserById(fromId);
+    updateChatInStorage(toId, fromId, text, false, fromUser || { email: fromId });
+  } catch (error) {
+    console.error('Send error:', error);
+  }
+};
+
+export const listenMessages = (userId, otherUserId, callback) => {
+  const chatId = [userId, otherUserId].sort().join('_');
+  const messagesRef = collection(db, 'chats', chatId, 'messages');
+  const q = query(messagesRef, orderBy('timestamp'));
+
+  return onSnapshot(q, (snapshot) => {
+    const messages = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    callback(messages);
+  });
+};
+
+export const uploadImage = (file, fromId, toId) =>
+  uploadImageToCloudinary(file, fromId, toId);
+
+export const uploadFile = (file, fromId, toId) =>
+  uploadFileToCloudinary(file, fromId, toId);
+
+export const sendImageMessage = async (fromId, toId, imageUrl) => {
+  try {
+    const chatId = [fromId, toId].sort().join('_');
+    await addDoc(collection(db, 'chats', chatId, 'messages'), {
+      text: '',
+      imageUrl,
+      fromId,
+      toId,
+      timestamp: Date.now()
+    });
+
+    const toUser = await getUserById(toId);
+    updateChatInStorage(fromId, toId, '📷 Image', true, toUser || { email: toId });
+
+    const fromUser = await getUserById(fromId);
+    updateChatInStorage(toId, fromId, '📷 Image', false, fromUser || { email: fromId });
+  } catch (error) {
+    console.error('Send image error:', error);
+  }
+};
+
+export const sendFileMessage = async (fromId, toId, fileUrl, fileName, fileType, fileSize) => {
+  try {
+    const chatId = [fromId, toId].sort().join('_');
+    await addDoc(collection(db, 'chats', chatId, 'messages'), {
+      text: '',
+      fileUrl,
+      fileName,
+      fileType,
+      fileSize,
+      fromId,
+      toId,
+      timestamp: Date.now()
+    });
+
+    const toUser = await getUserById(toId);
+    updateChatInStorage(fromId, toId, `📎 ${fileName}`, true, toUser || { email: toId });
+
+    const fromUser = await getUserById(fromId);
+    updateChatInStorage(toId, fromId, `📎 ${fileName}`, false, fromUser || { email: fromId });
+  } catch (error) {
+    console.error('Send file error:', error);
+  }
+};
+
+export const sendMultipleFilesMessage = async (fromId, toId, text, files, replyTo) => {
+  try {
+    const chatId = [fromId, toId].sort().join('_');
+    const imageUrls = files.filter((f) => f.isImage).map((f) => f.url);
+    const fileObjects = files.filter((f) => !f.isImage).map((f) => ({
+      url: f.url,
+      name: f.file.name,
+      type: f.file.type || 'application/octet-stream',
+      size: f.file.size
+    }));
+
+    const messageData = { text: text || '', fromId, toId, timestamp: Date.now() };
+    if (imageUrls.length > 0) messageData.imageUrls = imageUrls;
+    if (fileObjects.length > 0) messageData.files = fileObjects;
+    if (replyTo) messageData.replyTo = replyTo;
+
+    await addDoc(collection(db, 'chats', chatId, 'messages'), messageData);
+
+    const toUser = await getUserById(toId);
+    const fromUser = await getUserById(fromId);
+    const summary = `${imageUrls.length > 0 ? `📷 ${imageUrls.length} image(s)` : ''}${fileObjects.length > 0 ? `${imageUrls.length > 0 ? ' + ' : ''}📎 ${fileObjects.length} file(s)` : ''}`;
+
+    updateChatInStorage(fromId, toId, text || summary, true, toUser || { email: toId });
+    updateChatInStorage(toId, fromId, text || summary, false, fromUser || { email: fromId });
+  } catch (error) {
+    console.error('Send multiple files error:', error);
+    throw error;
+  }
+};
+
+export const getFileIcon = (fileType, fileName) => {
+  if (fileType.startsWith('image/')) return '🖼️';
+  if (fileType.startsWith('video/')) return '🎬';
+  if (fileType.startsWith('audio/')) return '🎵';
+  if (fileType.includes('pdf')) return '📄';
+  if (fileName) {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return '📄';
+    if (ext === 'doc' || ext === 'docx') return '📝';
+    if (ext === 'zip' || ext === 'rar') return '📦';
+  }
+  return '📎';
+};
+
+export const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
+};
+
+export const deleteMessage = async (chatId, messageId) => {
+  await deleteDoc(doc(db, 'chats', chatId, 'messages', messageId));
+};
+
+export const deleteMessages = async (chatId, messageIds) => {
+  await Promise.all(
+    messageIds.map((messageId) => deleteDoc(doc(db, 'chats', chatId, 'messages', messageId)))
+  );
+};
+
+export const editMessage = async (chatId, messageId, newText) => {
+  await updateDoc(doc(db, 'chats', chatId, 'messages', messageId), {
+    text: newText,
+    editedAt: Date.now()
+  });
+};
+
+export const saveChatBackground = async (chatId, background) => {
+  await setDoc(
+    doc(db, 'chats', chatId),
+    { background, updatedAt: Date.now() },
+    { merge: true }
+  );
+};
+
+export const listenChatBackground = (chatId, callback) => {
+  const chatRef = doc(db, 'chats', chatId);
+  return onSnapshot(chatRef, (docSnap) => {
+    callback(docSnap.exists() ? docSnap.data().background || null : null);
+  });
+};
+
+=== ФАЙЛ: C:\mess\src\services\cloudinaryService.js ===
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+export const getResourceType = (file) => {
+  const mimeType = file.type.toLowerCase();
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType.startsWith('video/')) return 'video';
+  if (mimeType.startsWith('audio/')) return 'video';
+  return 'raw';
+};
+
+export const uploadImageToCloudinary = async (file, fromId, toId) => {
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+    throw new Error('Cloudinary is not configured.');
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', `messenger/${fromId}_${toId}`);
+  formData.append('tags', `messenger,chat,${fromId},${toId}`);
+
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+  const response = await fetch(url, { method: 'POST', body: formData });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error?.message || 'Image upload failed');
+  }
+
+  const data = await response.json();
+  return data.secure_url;
+};
+
+export const uploadFileToCloudinary = async (file, fromId, toId) => {
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+    throw new Error('Cloudinary is not configured.');
+  }
+
+  const resourceType = getResourceType(file);
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', `messenger/${fromId}_${toId}`);
+  formData.append('tags', `messenger,chat,${fromId},${toId}`);
+
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
+  const response = await fetch(url, { method: 'POST', body: formData });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error?.message || 'File upload failed');
+  }
+
+  const data = await response.json();
+  return { url: data.secure_url, resourceType };
+};
+
+export const uploadAvatarToCloudinary = async (file, userId) => {
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+    throw new Error('Cloudinary is not configured.');
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', `messenger/avatars/${userId}`);
+  formData.append('tags', `messenger,avatar,${userId}`);
+
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+  const response = await fetch(url, { method: 'POST', body: formData });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error?.message || 'Avatar upload failed');
+  }
+
+  const data = await response.json();
+  return data.secure_url;
+};
+
+=== ФАЙЛ: C:\mess\src\services\messageParser.js ===
+
+const URL_REGEX = /(https?:\/\/[^\s]+)/g;
+
+const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i;
+
+export const isDirectImageUrl = (url) => {
+  try {
+    const urlObj = new URL(url);
+    const pathname = urlObj.pathname;
+    return IMAGE_EXTENSIONS.test(pathname);
+  } catch {
+    return false;
+  }
+};
+
+export const extractUrls = (text) => {
+  const urls = [];
+  let match;
+  while ((match = URL_REGEX.exec(text)) !== null) {
+    urls.push({
+      url: match[0],
+      isImage: isDirectImageUrl(match[0])
+    });
+  }
+  return urls;
+};
+
+export const parseMessageContent = (text) => {
+  if (!text) return { text: '', images: [] };
+  
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  
+  URL_REGEX.lastIndex = 0;
+  
+  while ((match = URL_REGEX.exec(text)) !== null) {
+    const url = match[0];
+    const startIndex = match.index;
+    
+    if (startIndex > lastIndex) {
+      parts.push({
+        type: 'text',
+        content: text.slice(lastIndex, startIndex)
+      });
+    }
+    
+    const isImage = isDirectImageUrl(url);
+    parts.push({
+      type: isImage ? 'image' : 'link',
+      url: url,
+      content: url
+    });
+    
+    lastIndex = startIndex + url.length;
+  }
+  
+  if (lastIndex < text.length) {
+    parts.push({
+      type: 'text',
+      content: text.slice(lastIndex)
+    });
+  }
+  
+  const images = parts.filter(p => p.type === 'image').map(p => p.url);
+  const textParts = parts.filter(p => p.type === 'text');
+  const links = parts.filter(p => p.type === 'link');
+  
+  let finalText = '';
+  for (const part of parts) {
+    if (part.type === 'text') {
+      finalText += part.content;
+    } else if (part.type === 'link') {
+      finalText += part.url;
+    }
+  }
+  
+  return {
+    text: finalText.trim(),
+    images: images,
+    links: links.map(l => l.url)
+  };
+};
+
+export const processMessageForSend = (text, existingImages = []) => {
+  const parsed = parseMessageContent(text);
+  
+  return {
+    text: parsed.text,
+    imageUrls: [...existingImages, ...parsed.images],
+    hasAutoImages: parsed.images.length > 0
+  };
+};
+
+=== ФАЙЛ: C:\mess\src\services\userService.js ===
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc
+} from 'firebase/firestore';
+import { db } from '../config/firebase';
+
+export function formatUserName(user) {
+  if (!user) return '';
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+  if (fullName) return fullName;
+  if (user.name?.trim()) return user.name.trim();
+  return user.email || '';
+}
+
+export function toChatUser(user) {
+  if (!user) return null;
+  return {
+    uid: user.uid,
+    email: user.email,
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    name: formatUserName(user),
+    photoURL: user.photoURL || ''
+  };
+}
+
+export const createUserProfile = async (userId, email, profileData = {}) => {
+  try {
+    const data = typeof profileData === 'string' ? { name: profileData } : profileData;
+    const firstName = (data.firstName || '').trim();
+    const lastName = (data.lastName || '').trim();
+    const name =
+      [firstName, lastName].filter(Boolean).join(' ').trim() || (data.name || '').trim();
+
+    await setDoc(doc(db, 'users', userId), {
+      uid: userId,
+      email,
+      firstName,
+      lastName,
+      name,
+      phone: data.phone || '',
+      createdAt: Date.now()
+    });
+  } catch (error) {
+    console.error('Error creating profile:', error);
+  }
+};
+
+export const searchUsers = async (email) => {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('email', '>=', email), where('email', '<=', email + '\uf8ff'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ uid: d.id, ...d.data() }));
+  } catch (error) {
+    console.error('Search error:', error);
+    return [];
+  }
+};
+
+export const getAllUsers = async () => {
+  try {
+    const snapshot = await getDocs(collection(db, 'users'));
+    return snapshot.docs.map((d) => ({ uid: d.id, ...d.data() }));
+  } catch (error) {
+    console.error('Get users error:', error);
+    return [];
+  }
+};
+
+export const checkUserExists = async (userId) => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    return userDoc.exists();
+  } catch (error) {
+    console.error('Check user error:', error);
+    return false;
+  }
+};
+
+export const getUserById = async (userId) => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      return { uid: userDoc.id, ...userDoc.data() };
+    }
+    return null;
+  } catch (error) {
+    console.error('Get user error:', error);
+    return null;
+  }
+};
+
+export const updateUserProfile = async (userId, data) => {
+  try {
+    await updateDoc(doc(db, 'users', userId), {
+      ...data,
+      updatedAt: Date.now()
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    throw error;
+  }
+};
+
+=== ФАЙЛ: C:\mess\src\types\user.ts ===
+export interface User {
+  uid: string;
+  email: string;
+  name?: string;
+  displayName?: string;
+  phone?: string;
+  photoURL?: string;
+  firstName?: string;
+  lastName?: string;
+  birthday?: string;
+  bio?: string;
+  createdAt?: number;
+}
+
+export interface ChatBackground {
+  type: 'color' | 'gradient' | 'image';
+  value: string;
+}
+
+export interface Message {
+  id?: string;
+  text: string;
+  fromId: string;
+  toId: string;
+  timestamp: number;
+  imageUrl?: string;
+  imageUrls?: string[];
+  fileUrl?: string;
+  files?: Array<{
+    url: string;
+    name: string;
+    type: string;
+    size: number;
+  }>;
+  fileName?: string;
+  fileType?: string;
+  fileSize?: number;
+  editedAt?: number;
+  replyTo?: {
+    messageId: string;
+    text: string;
+    fromId: string;
+    fromName?: string;
+    imageCount?: number;
+    fileCount?: number;
+    fileNames?: string[];
+  };
+}
+
+export interface LocalChat {
+  id: string;
+  otherUserId: string;
+  otherUserName?: string;
+  otherUserFirstName?: string;
+  otherUserLastName?: string;
+  otherUserEmail: string;
+  otherUserPhotoURL?: string;
+  lastMessage?: string;
+  lastMessageTime: number;
+  unreadCount: number;
+}
+
+export interface ActiveChat {
+  id: string;
+  otherUserId: string;
+  otherUserName?: string;
+  otherUserFirstName?: string;
+  otherUserLastName?: string;
+  otherUserEmail: string;
+  lastMessage?: string;
+  lastMessageTime?: number;
+  unreadCount: number;
+}
+
+=== ФАЙЛ: C:\mess\src\App.css ===
+/* App-level overrides — layout lives in pages/Chat/Chat.module.css */
+
+=== ФАЙЛ: C:\mess\src\App.jsx ===
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import Login from './pages/Login/Login';
+import Register from './pages/Register/Register';
+import ChatPage from './pages/Chat/Chat';
+import ProfileLayout from './pages/Profile/ProfileLayout';
+import Profile from './pages/Profile/Profile';
+import ProfileSettings from './pages/Profile/ProfileSettings';
+import './App.css';
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter basename="/mess">
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <ChatPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfileLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Profile />} />
+            <Route path="settings" element={<ProfileSettings />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
+
+=== ФАЙЛ: C:\mess\src\index.css ===
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --color-white: #ffffff;
+  --color-black: #0a0a0a;
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f4f4f5;
+  --color-gray-200: #e4e4e7;
+  --color-gray-300: #d4d4d8;
+  --color-gray-400: #a1a1aa;
+  --color-gray-500: #71717a;
+
+  --bg-primary: var(--color-white);
+  --bg-secondary: var(--color-gray-50);
+  --bg-tertiary: var(--color-gray-100);
+  --bg-card: var(--color-white);
+  --bg-message-incoming: var(--color-gray-100);
+  --bg-message-outgoing: var(--color-black);
+
+  --gradient-primary: var(--color-black);
+  --gradient-danger: var(--color-black);
+
+  --accent-primary: var(--color-black);
+  --accent-secondary: var(--color-black);
+  --accent-hover: #262626;
+  --accent-glow: transparent;
+  --accent-glow-strong: transparent;
+
+  --error: #b91c1c;
+  --error-bg: #fef2f2;
+  --warning: #a16207;
+  --success: #15803d;
+  --info: var(--color-gray-500);
+
+  --text-primary: var(--color-black);
+  --text-secondary: #3f3f46;
+  --text-muted: var(--color-gray-500);
+  --text-dim: var(--color-gray-400);
+  --text-on-accent: var(--color-white);
+
+  --border-primary: var(--color-gray-300);
+  --border-secondary: var(--color-gray-200);
+  --border-dim: var(--color-gray-100);
+
+  --header-height: 56px;
+  --sidebar-width: 320px;
+  --sidebar-width-collapsed: 280px;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 28px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-glow: var(--shadow-sm);
+  --shadow-glow-sm: var(--shadow-sm);
+  --shadow-inner: inset 0 1px 0 rgba(0, 0, 0, 0.03);
+
+  --transition-fast: 0.12s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 22px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  min-height: 100vh;
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+  padding: var(--spacing-xl);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-400);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: cursor-blink 1s step-end infinite;
+}
+
+/* Global buttons */
+.btn-terminal {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 6px 12px;
+  background: var(--color-white);
+  color: var(--color-black);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-terminal:hover:not(:disabled) {
+  background: var(--color-gray-50);
+  border-color: var(--border-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-terminal:active:not(:disabled) {
+  box-shadow: none;
+}
+
+.btn-terminal:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-terminal-primary,
+.auth-submit {
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border-color: var(--color-black);
+}
+
+.btn-terminal-primary:hover:not(:disabled),
+.auth-submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-terminal-danger {
+  color: var(--error);
+  border-color: var(--color-gray-300);
+}
+
+.btn-terminal-danger:hover:not(:disabled) {
+  background: var(--error-bg);
+  border-color: var(--error);
+}
+
+.input-terminal,
+.input-modern {
+  font-family: var(--font-sans);
+}
+
+.loading-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.loading-text {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  #root {
+    padding: 0;
+  }
+
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+=== ФАЙЛ: C:\mess\src\main.jsx ===
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+=== ФАЙЛ: C:\mess\.env ===
+VITE_FIREBASE_API_KEY=AIzaSyARnOHwq0FOu0Z1rDLNwo5anBc6D1LmeYQ
+VITE_FIREBASE_AUTH_DOMAIN=mess-e5fcf.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=mess-e5fcf
+VITE_FIREBASE_STORAGE_BUCKET=mess-e5fcf.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=535905795881
+VITE_FIREBASE_APP_ID=1:535905795881:web:28746ebb0791e454238138
+
+=== ФАЙЛ: C:\mess\CLOUDINARY_SETUP.md ===
+
+=== ФАЙЛ: C:\mess\eslint.config.js ===
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+])
+
+=== ФАЙЛ: C:\mess\index.html ===
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="Messenger on Firebase" />
+    <title> Messenger</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+
+=== ФАЙЛ: C:\mess\README.md ===
+# Firebase Messenger 💬
+
+Мессенджер в терминальном стиле с поддержкой обмена файлами через Cloudinary.
+
+## Особенности
+
+- 🔐 Аутентификация через Firebase
+- 💬 Обмен сообщениями в реальном времени
+- 🖼️ Отправка изображений (JPG, PNG, GIF, WebP)
+- 📎 Отправка файлов любого типа (документы, видео, аудио, архивы)
+- 📱 Адаптивный дизайн для ПК и мобильных
+- 🔔 Уведомления о новых сообщениях
+- 📋 Список активных чатов
+- 🔍 Поиск пользователей по email
+
+## Быстрый старт
+
+### 1. Установка зависимостей
+
+```bash
+npm install
+```
+
+### 2. Настройка Firebase
+
+1. Создайте проект на [Firebase Console](https://console.firebase.google.com/)
+2. Включите **Authentication** (Email/Password)
+3. Создайте **Firestore Database**
+4. Скопируйте конфигурацию из проекта
+
+### 3. Настройка Cloudinary (для файлов)
+
+1. Зарегистрируйтесь на [Cloudinary](https://cloudinary.com/)
+2. Создайте **Upload Preset** с режимом **Unsigned**
+3. Получите **Cloud Name**
+
+Подробная инструкция в [CLOUDINARY_SETUP.md](./CLOUDINARY_SETUP.md)
+
+**Поддерживаемые типы файлов:**
+
+| Тип | Форматы | Endpoint |
+|-----|---------|----------|
+| 🖼️ Изображения | JPG, PNG, GIF, WebP, SVG, BMP | `image/upload` |
+| 🎬 Видео | MP4, AVI, MOV, WebM, MKV | `video/upload` |
+| 🎵 Аудио | MP3, WAV, OGG, FLAC | `video/upload` |
+| 📄 Документы | PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX | `raw/upload` |
+| 📦 Архивы | ZIP, RAR, 7Z, TAR, GZ | `raw/upload` |
+| 💻 Код | JS, TS, JSX, TSX, JSON, CSS, HTML | `raw/upload` |
+
+### 4. Создание файла .env
+
+Скопируйте `.env.example` в `.env` и заполните переменные:
+
+```bash
+# Firebase
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+
+# Cloudinary
+VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+VITE_CLOUDINARY_UPLOAD_PRESET=messenger_uploads
+```
+
+### 5. Запуск
+
+```bash
+npm run dev
+```
+
+## Скрипты
+
+| Команда | Описание |
+|---------|----------|
+| `npm run dev` | Запуск dev-сервера |
+| `npm run build` | Сборка проекта |
+| `npm run preview` | Предпросмотр сборки |
+| `npm run deploy` | Деплой на GitHub Pages |
+
+## Технологии
+
+- **React 18** + TypeScript
+- **Vite** — сборка
+- **Firebase** — Auth, Firestore
+- **Cloudinary** — хранение файлов (изображения, видео, аудио, документы)
+
+## Структура проекта
+
+```
+src/
+├── components/
+│   ├── Auth.tsx         # Форма входа/регистрации
+│   ├── Chat.tsx         # Компонент чата
+│   ├── Search.tsx       # Поиск пользователей
+│   ├── ActiveChatsList.tsx  # Список чатов
+│   └── Notifications.tsx    # Уведомления
+├── lib/
+│   └── cloudinary.ts    # Интеграция с Cloudinary (все типы файлов)
+├── firebase.ts          # Firebase конфигурация + функции сообщений
+├── App.tsx              # Главный компонент
+└── main.tsx             # Точка входа
+```
+
+## Правила Firestore
+
+Для работы мессенджера добавьте следующие правила в Firestore:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Пользователи
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // Чаты и сообщения
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null;
+      
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+    
+    // Временные метки прочтения
+    match /readTimes/{readTimeId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+
+## Бесплатные лимиты
+
+### Firebase (Spark Plan)
+- Auth: 10K пользователей/мес
+- Firestore: 1 GB хранения, 50K чтений/день
+
+### Cloudinary (Free Plan)
+- 25 GB хранилища
+- 25 GB трафика/мес
+- 25 000 трансформаций/мес
+
+**Примечание:** Для загрузки файлов используется тот же upload preset, что и для изображений. Cloudinary автоматически определяет тип файла и сохраняет его в соответствующей категории.
+
+## Лицензия
+
+MIT
+
+=== ФАЙЛ: C:\mess\vite.config.js ===
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/mess/',
+  server: {
+    port: 5173,
+    open: true
+  }
+});

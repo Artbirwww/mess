@@ -1,17 +1,12 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { auth } from '../firebase/config';
-import { checkUserExists, createUserProfile, getUserById } from '../services/userService';
+import { auth } from '../config/firebase';
+import { checkUserExists, createUserProfile, formatUserName, getUserById, updateUserProfile } from '../services/userService';
 
 const AuthContext = createContext(null);
 
 async function buildUserState(firebaseUser) {
   const profile = (await getUserById(firebaseUser.uid)) || {};
-  const name =
-    profile.name ||
-    [profile.firstName, profile.lastName].filter(Boolean).join(' ') ||
-    firebaseUser.displayName ||
-    firebaseUser.email?.split('@')[0] ||
-    'User';
+  const name = formatUserName({ ...profile, email: firebaseUser.email });
 
   return {
     ...profile,
@@ -23,6 +18,7 @@ async function buildUserState(firebaseUser) {
     lastName: profile.lastName || '',
     birthday: profile.birthday || '',
     bio: profile.bio || '',
+    phone: profile.phone || '',
     photoURL: profile.photoURL || firebaseUser.photoURL || ''
   };
 }
@@ -45,9 +41,13 @@ export function AuthProvider({ children }) {
         if (!exists) {
           const displayName =
             firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User';
-          await createUserProfile(firebaseUser.uid, firebaseUser.email || '', displayName);
+          await createUserProfile(firebaseUser.uid, firebaseUser.email || '', { name: displayName });
         }
         const userData = await buildUserState(firebaseUser);
+        if (userData.email !== firebaseUser.email && firebaseUser.email) {
+          await updateUserProfile(firebaseUser.uid, { email: firebaseUser.email });
+          userData.email = firebaseUser.email;
+        }
         setUser(userData);
       } else {
         setUser(null);

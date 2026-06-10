@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { searchUsers } from '../../../services/userService';
+import { searchUsers, formatUserName, toChatUser } from '../../../services/userService';
 import { useAuth } from '../../../context/AuthContext';
 import Avatar from '../../avatars/Avatar';
 import styles from './ChatListHeader.module.css';
@@ -40,7 +40,7 @@ export default function ChatListHeader({ onSelectUser, onLogout, isMobile, onSho
   };
 
   const handleSelect = (selected) => {
-    onSelectUser({ uid: selected.uid, email: selected.email, name: selected.name });
+    onSelectUser(toChatUser(selected));
     setQuery('');
     setResults([]);
     setShowDropdown(false);
@@ -51,12 +51,12 @@ export default function ChatListHeader({ onSelectUser, onLogout, isMobile, onSho
       <div className={styles.inner}>
         <Link to="/profile" className={styles.user}>
           <Avatar
-            name={user?.name}
+            name={formatUserName(user)}
             email={user?.email}
             photoURL={user?.photoURL}
             size="small"
           />
-          <span className={styles.userLabel}>{user?.name || user?.email}</span>
+          <span className={styles.userLabel}>{formatUserName(user) || user?.email}</span>
         </Link>
 
         <div className={styles.searchWrap} ref={dropdownRef}>
@@ -86,8 +86,16 @@ export default function ChatListHeader({ onSelectUser, onLogout, isMobile, onSho
                     role="button"
                     tabIndex={0}
                   >
-                    <div className={styles.dropdownName}>{u.name || u.email}</div>
-                    <div className={styles.dropdownEmail}>{u.email}</div>
+                    <Avatar
+                      name={formatUserName(u)}
+                      email={u.email}
+                      photoURL={u.photoURL}
+                      size="small"
+                    />
+                    <div className={styles.dropdownMeta}>
+                      <div className={styles.dropdownName}>{formatUserName(u)}</div>
+                      <div className={styles.dropdownEmail}>{u.email}</div>
+                    </div>
                   </div>
                 ))
               )}

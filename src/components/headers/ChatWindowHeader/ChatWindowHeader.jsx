@@ -1,3 +1,5 @@
+import Avatar from '../../avatars/Avatar';
+import { formatUserName } from '../../../services/userService';
 import styles from './ChatWindowHeader.module.css';
 
 export default function ChatWindowHeader({
@@ -11,14 +13,72 @@ export default function ChatWindowHeader({
   onDeleteSelected,
   onClearSelection,
   onToggleSelection,
-  onShowBackground
+  onShowBackground,
+  searchOpen,
+  searchQuery,
+  searchMatchCount,
+  searchMatchIndex,
+  onToggleSearch,
+  onSearchQueryChange,
+  onSearchPrev,
+  onSearchNext,
+  onAvatarClick
 }) {
+  const displayName = formatUserName(otherUser);
+
   return (
     <div className={styles.header}>
-      <div className={styles.info}>
-        <div className={styles.name}>{otherUser.name || otherUser.email}</div>
-        <div className={styles.status}>{otherUser.email}</div>
+      <div className={styles.info} onClick={onAvatarClick} style={{ cursor: 'pointer' }}>
+        <Avatar
+          name={displayName}
+          email={otherUser.email}
+          photoURL={otherUser.photoURL}
+          size="small"
+        />
+        <div className={styles.infoText}>
+          <div className={styles.name}>{displayName}</div>
+          <div className={styles.status}>{otherUser.email}</div>
+        </div>
       </div>
+
+      {searchOpen && !selectionMode && (
+        <div className={styles.searchBar}>
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => onSearchQueryChange(e.target.value)}
+            placeholder="Поиск в чате..."
+            className={styles.searchInput}
+            autoFocus
+          />
+          {searchQuery.trim() && (
+            <span className={styles.searchCount}>
+              {searchMatchCount > 0
+                ? `${searchMatchIndex + 1} / ${searchMatchCount}`
+                : '0 результатов'}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onSearchPrev}
+            disabled={searchMatchCount === 0}
+            className={styles.btn}
+            title="Предыдущее"
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            onClick={onSearchNext}
+            disabled={searchMatchCount === 0}
+            className={styles.btn}
+            title="Следующее"
+          >
+            ↓
+          </button>
+        </div>
+      )}
+
       <div className={styles.actions}>
         {selectionMode ? (
           <>
@@ -26,7 +86,7 @@ export default function ChatWindowHeader({
               {selectedCount} / {messagesCount}
             </span>
             <button type="button" onClick={onSelectAll} className={styles.btn}>
-              All
+              Все
             </button>
             <button
               type="button"
@@ -34,26 +94,34 @@ export default function ChatWindowHeader({
               disabled={selectedCount === 0}
               className={`${styles.btn} ${styles.btnDanger}`}
             >
-              Delete
+              Удалить
             </button>
             <button type="button" onClick={onClearSelection} className={styles.btn}>
-              Cancel
+              Отмена
             </button>
           </>
         ) : (
           <>
-            <button type="button" onClick={onShowBackground} className={styles.btn} title="Background">
-              Background
+            <button
+              type="button"
+              onClick={onToggleSearch}
+              className={`${styles.btn} ${searchOpen ? styles.btnActive : ''}`}
+              title="Поиск сообщений"
+            >
+              Поиск
+            </button>
+            <button type="button" onClick={onShowBackground} className={styles.btn} title="Фон">
+              Фон
             </button>
             <button type="button" onClick={onToggleSelection} className={styles.btn}>
-              Select
+              Выбрать
             </button>
           </>
         )}
       </div>
       {isMobile && onBack && (
         <button type="button" onClick={onBack} className={styles.btn}>
-          Back
+          Назад
         </button>
       )}
     </div>

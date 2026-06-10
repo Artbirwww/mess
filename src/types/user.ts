@@ -3,6 +3,12 @@ export interface User {
   email: string;
   name?: string;
   displayName?: string;
+  phone?: string;
+  photoURL?: string;
+  firstName?: string;
+  lastName?: string;
+  birthday?: string;
+  bio?: string;
   createdAt?: number;
 }
 
@@ -45,7 +51,10 @@ export interface LocalChat {
   id: string;
   otherUserId: string;
   otherUserName?: string;
+  otherUserFirstName?: string;
+  otherUserLastName?: string;
   otherUserEmail: string;
+  otherUserPhotoURL?: string;
   lastMessage?: string;
   lastMessageTime: number;
   unreadCount: number;
@@ -55,6 +64,8 @@ export interface ActiveChat {
   id: string;
   otherUserId: string;
   otherUserName?: string;
+  otherUserFirstName?: string;
+  otherUserLastName?: string;
   otherUserEmail: string;
   lastMessage?: string;
   lastMessageTime?: number;

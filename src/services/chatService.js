@@ -12,9 +12,9 @@ import {
   deleteDoc,
   updateDoc
 } from 'firebase/firestore';
-import { db } from '../firebase/config';
-import { getUserById } from './userService';
-import { uploadImageToCloudinary, uploadFileToCloudinary } from './cloudinaryService';
+import { db } from '../config/firebase';
+import { getUserById, formatUserName } from './userService';
+import { uploadFileToGitHub, uploadAvatarToGitHub } from './githubService';
 
 const getStorageKey = (userId) => `messenger_chats_${userId}`;
 
@@ -40,12 +40,17 @@ export const saveChatsToStorage = (userId, chats) => {
 export const updateChatInStorage = (
   userId,
   otherUserId,
-  otherUserEmail,
-  otherUserName,
   lastMessage,
-  isFromMe = false
+  isFromMe = false,
+  otherUser = {}
 ) => {
   try {
+    const otherUserEmail = otherUser.email || otherUserId;
+    const otherUserName = formatUserName(otherUser) || otherUserEmail;
+    const otherUserFirstName = otherUser.firstName || '';
+    const otherUserLastName = otherUser.lastName || '';
+    const otherUserPhotoURL = otherUser.photoURL || '';
+
     const chats = getChatsFromStorage(userId);
     const chatId = [userId, otherUserId].sort().join('_');
     const existingChat = chats.find((c) => c.otherUserId === otherUserId);
@@ -53,7 +58,11 @@ export const updateChatInStorage = (
     if (existingChat) {
       existingChat.lastMessage = lastMessage;
       existingChat.lastMessageTime = Date.now();
-      if (otherUserName) existingChat.otherUserName = otherUserName;
+      existingChat.otherUserEmail = otherUserEmail;
+      existingChat.otherUserName = otherUserName;
+      existingChat.otherUserFirstName = otherUserFirstName;
+      existingChat.otherUserLastName = otherUserLastName;
+      if (otherUserPhotoURL) existingChat.otherUserPhotoURL = otherUserPhotoURL;
       if (isFromMe) existingChat.unreadCount = 0;
     } else {
       chats.push({
@@ -61,6 +70,9 @@ export const updateChatInStorage = (
         otherUserId,
         otherUserEmail,
         otherUserName,
+        otherUserFirstName,
+        otherUserLastName,
+        otherUserPhotoURL,
         lastMessage,
         lastMessageTime: Date.now(),
         unreadCount: isFromMe ? 0 : 1
@@ -90,6 +102,11 @@ export const incrementUnreadInStorage = (userId, otherUserId) => {
   }
 };
 
+export const getUnreadCount = (userId, otherUserId) => {
+  const chat = getChatsFromStorage(userId).find((c) => c.otherUserId === otherUserId);
+  return chat?.unreadCount ?? 0;
+};
+
 export const resetUnreadInStorage = (userId, otherUserId) => {
   try {
     const chats = getChatsFromStorage(userId);
@@ -114,10 +131,10 @@ export const sendMessage = async (fromId, toId, text, replyTo) => {
     await addDoc(collection(db, 'chats', chatId, 'messages'), messageData);
 
     const toUser = await getUserById(toId);
-    updateChatInStorage(fromId, toId, toUser?.email || toId, toUser?.name, text, true);
+    updateChatInStorage(fromId, toId, text, true, toUser || { email: toId });
 
     const fromUser = await getUserById(fromId);
-    updateChatInStorage(toId, fromId, fromUser?.email || fromId, fromUser?.name, text, false);
+    updateChatInStorage(toId, fromId, text, false, fromUser || { email: fromId });
   } catch (error) {
     console.error('Send error:', error);
   }
@@ -134,11 +151,20 @@ export const listenMessages = (userId, otherUserId, callback) => {
   });
 };
 
-export const uploadImage = (file, fromId, toId) =>
-  uploadImageToCloudinary(file, fromId, toId);
+export const uploadImage = async (file, fromId, toId) => {
+  const chatId = [fromId, toId].sort().join('_');
+  const result = await uploadFileToGitHub(file, 'chat', fromId, chatId);
+  return result.url;
+};
 
-export const uploadFile = (file, fromId, toId) =>
-  uploadFileToCloudinary(file, fromId, toId);
+export const uploadFile = async (file, fromId, toId) => {
+  const chatId = [fromId, toId].sort().join('_');
+  return uploadFileToGitHub(file, 'chat', fromId, chatId);
+};
+
+export const uploadAvatar = async (file, userId) => {
+  return uploadAvatarToGitHub(file, userId);
+};
 
 export const sendImageMessage = async (fromId, toId, imageUrl) => {
   try {
@@ -152,10 +178,10 @@ export const sendImageMessage = async (fromId, toId, imageUrl) => {
     });
 
     const toUser = await getUserById(toId);
-    updateChatInStorage(fromId, toId, toUser?.email || toId, toUser?.name, '📷 Image', true);
+    updateChatInStorage(fromId, toId, '📷 Image', true, toUser || { email: toId });
 
     const fromUser = await getUserById(fromId);
-    updateChatInStorage(toId, fromId, fromUser?.email || fromId, fromUser?.name, '📷 Image', false);
+    updateChatInStorage(toId, fromId, '📷 Image', false, fromUser || { email: fromId });
   } catch (error) {
     console.error('Send image error:', error);
   }
@@ -176,10 +202,10 @@ export const sendFileMessage = async (fromId, toId, fileUrl, fileName, fileType,
     });
 
     const toUser = await getUserById(toId);
-    updateChatInStorage(fromId, toId, toUser?.email || toId, toUser?.name, `📎 ${fileName}`, true);
+    updateChatInStorage(fromId, toId, `📎 ${fileName}`, true, toUser || { email: toId });
 
     const fromUser = await getUserById(fromId);
-    updateChatInStorage(toId, fromId, fromUser?.email || fromId, fromUser?.name, `📎 ${fileName}`, false);
+    updateChatInStorage(toId, fromId, `📎 ${fileName}`, false, fromUser || { email: fromId });
   } catch (error) {
     console.error('Send file error:', error);
   }
@@ -207,8 +233,8 @@ export const sendMultipleFilesMessage = async (fromId, toId, text, files, replyT
     const fromUser = await getUserById(fromId);
     const summary = `${imageUrls.length > 0 ? `📷 ${imageUrls.length} image(s)` : ''}${fileObjects.length > 0 ? `${imageUrls.length > 0 ? ' + ' : ''}📎 ${fileObjects.length} file(s)` : ''}`;
 
-    updateChatInStorage(fromId, toId, toUser?.email || toId, toUser?.name, text || summary, true);
-    updateChatInStorage(toId, fromId, fromUser?.email || fromId, fromUser?.name, text || summary, false);
+    updateChatInStorage(fromId, toId, text || summary, true, toUser || { email: toId });
+    updateChatInStorage(toId, fromId, text || summary, false, fromUser || { email: fromId });
   } catch (error) {
     console.error('Send multiple files error:', error);
     throw error;

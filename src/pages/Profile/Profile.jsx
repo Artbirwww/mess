@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Avatar from '../../components/avatars/Avatar';
+import { formatUserName } from '../../services/userService';
 import styles from './Profile.module.css';
 
 function formatBirthday(value) {
@@ -15,8 +16,7 @@ function formatBirthday(value) {
 }
 
 function displayName(user) {
-  const full = [user.firstName, user.lastName].filter(Boolean).join(' ');
-  return user.name || full || user.email;
+  return formatUserName(user);
 }
 
 export default function Profile() {
@@ -51,6 +51,10 @@ export default function Profile() {
         <div className={styles.detailRow}>
           <dt>Birthday</dt>
           <dd>{formatBirthday(user.birthday)}</dd>
+        </div>
+        <div className={styles.detailRow}>
+          <dt>Phone</dt>
+          <dd>{user.phone || '—'}</dd>
         </div>
         <div className={styles.detailRow}>
           <dt>Bio</dt>

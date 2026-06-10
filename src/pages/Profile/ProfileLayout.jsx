@@ -10,9 +10,9 @@ export default function ProfileLayout() {
       <div className={styles.shell}>
         <header className={styles.topBar}>
           <Link to="/" className={styles.backLink}>
-            ← Messages
+            ← Назад к чатам
           </Link>
-          <h1 className={styles.pageTitle}>Account</h1>
+          <h1 className={styles.pageTitle}>Аккаунт</h1>
         </header>
 
         <nav className={styles.tabs} aria-label="Profile sections">
@@ -23,7 +23,7 @@ export default function ProfileLayout() {
               `${styles.tab} ${isActive ? styles.tabActive : ''}`
             }
           >
-            Profile
+            Профиль
           </NavLink>
           <NavLink
             to="/profile/settings"
@@ -31,7 +31,7 @@ export default function ProfileLayout() {
               `${styles.tab} ${isActive ? styles.tabActive : ''}`
             }
           >
-            Settings
+            Настройки
           </NavLink>
         </nav>
 

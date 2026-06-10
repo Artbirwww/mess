@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   sendMessage,
   listenMessages,
@@ -15,12 +15,45 @@ import {
   saveChatBackground,
   listenChatBackground
 } from '../../../services/chatService';
+import { formatUserName } from '../../../services/userService';
 import ChatWindowHeader from '../../headers/ChatWindowHeader/ChatWindowHeader';
 import MessagesArea from '../MessagesArea/MessagesArea';
 import MessageInput from '../../inputs/MessageInput/MessageInput';
+import Message from '../../message/Message';
+import UserProfile from '../../UserProfile/UserProfile';
 import styles from './ChatWindow.module.css';
 
-export default function ChatWindow({ otherUser, currentUser, isMobile = false, onBack }) {
+function getFirstUnreadIndex(messages, currentUserId, unreadCount) {
+  if (unreadCount <= 0) return -1;
+  let incomingFromEnd = 0;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].fromId !== currentUserId) {
+      incomingFromEnd += 1;
+      if (incomingFromEnd === unreadCount) return i;
+    }
+  }
+  return -1;
+}
+
+function scrollChatToBottom(container, endRef) {
+  endRef?.current?.scrollIntoView({ block: 'end' });
+  if (container) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function isNearBottom(container, threshold = 80) {
+  if (!container) return true;
+  return container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
+}
+
+export default function ChatWindow({
+  otherUser,
+  currentUser,
+  initialUnreadCount = 0,
+  isMobile = false,
+  onBack
+}) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -37,6 +70,11 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
   const [chatBackground, setChatBackground] = useState(null);
   const [showBackgroundModal, setShowBackgroundModal] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchMatchIndex, setSearchMatchIndex] = useState(0);
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [uploadingBackground, setUploadingBackground] = useState(false);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -44,10 +82,14 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
   const fileInputGeneralRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const prevMessageCountRef = useRef(0);
+  const initialScrollDoneRef = useRef(false);
+  const entryUnreadRef = useRef(initialUnreadCount);
+  const lastSeenMessageCountRef = useRef(0);
   const editInputRef = useRef(null);
   const chatId = [currentUser.uid, otherUser.uid].sort().join('_');
 
   useEffect(() => {
+    setMessages([]);
     const unsubscribe = listenMessages(currentUser.uid, otherUser.uid, (newMessages) => {
       if (newMessages.length > prevMessageCountRef.current) {
         const lastMessage = newMessages[newMessages.length - 1];
@@ -55,10 +97,9 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
         updateChatInStorage(
           currentUser.uid,
           otherUser.uid,
-          otherUser.email,
-          otherUser.name,
           lastMessage.text,
-          isFromMe
+          isFromMe,
+          otherUser
         );
         if (!isFromMe && document.hidden) {
           incrementUnreadInStorage(currentUser.uid, otherUser.uid);
@@ -75,8 +116,107 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
   }, [chatId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    entryUnreadRef.current = initialUnreadCount;
+    initialScrollDoneRef.current = false;
+    prevMessageCountRef.current = 0;
+    lastSeenMessageCountRef.current = 0;
+    setSearchOpen(false);
+    setSearchQuery('');
+    setSearchMatchIndex(0);
+  }, [otherUser.uid, initialUnreadCount]);
+
+  const searchMatchIndices = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return [];
+    return messages.reduce((indices, msg, index) => {
+      if (msg.text?.toLowerCase().includes(query)) indices.push(index);
+      return indices;
+    }, []);
+  }, [messages, searchQuery]);
+
+  const activeSearchMatchIndex =
+    searchMatchIndices.length > 0
+      ? searchMatchIndices[Math.min(searchMatchIndex, searchMatchIndices.length - 1)]
+      : -1;
+
+  useEffect(() => {
+    if (activeSearchMatchIndex < 0) return;
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const node = container.querySelector(`[data-message-index="${activeSearchMatchIndex}"]`);
+    node?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [activeSearchMatchIndex, searchQuery]);
+
+  useEffect(() => {
+    setSearchMatchIndex(0);
+  }, [searchQuery, otherUser.uid]);
+
+  const firstUnreadIndex = useMemo(
+    () => getFirstUnreadIndex(messages, currentUser.uid, entryUnreadRef.current),
+    [messages, currentUser.uid]
+  );
+
+  useEffect(() => {
+    if (searchOpen || messages.length === 0) return;
+
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    let cancelled = false;
+    let resizeObserver;
+
+    const applyScroll = () => {
+      if (cancelled || searchOpen) return;
+      scrollChatToBottom(container, messagesEndRef);
+      setShowScrollButton(false);
+    };
+
+    applyScroll();
+    const raf1 = requestAnimationFrame(applyScroll);
+    const raf2 = requestAnimationFrame(() => requestAnimationFrame(applyScroll));
+
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(applyScroll);
+      resizeObserver.observe(container);
+    }
+
+    const timer = setTimeout(() => {
+      applyScroll();
+      initialScrollDoneRef.current = true;
+      lastSeenMessageCountRef.current = messages.length;
+      resizeObserver?.disconnect();
+    }, 200);
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      clearTimeout(timer);
+      resizeObserver?.disconnect();
+    };
+  }, [otherUser.uid, messages.length, searchOpen]);
+
+  useEffect(() => {
+    if (searchOpen || !initialScrollDoneRef.current || messages.length === 0) return;
+
+    const container = messagesContainerRef.current;
+    const prevLen = lastSeenMessageCountRef.current;
+    const currentLen = messages.length;
+    lastSeenMessageCountRef.current = currentLen;
+
+    if (currentLen <= prevLen) return;
+
+    const lastMessage = messages[currentLen - 1];
+    const shouldScroll =
+      lastMessage.fromId === currentUser.uid || isNearBottom(container);
+
+    if (shouldScroll) {
+      requestAnimationFrame(() => {
+        scrollChatToBottom(container, messagesEndRef);
+        setShowScrollButton(false);
+      });
+    }
+  }, [messages, searchOpen, currentUser.uid]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -94,6 +234,20 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
   }, [contextMenu]);
+
+  const scrollToMessage = (messageId) => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    const messageElement = container.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      messageElement.style.backgroundColor = 'var(--highlight-bg)';
+      setTimeout(() => {
+        messageElement.style.backgroundColor = '';
+      }, 2000);
+    }
+  };
 
   const addFiles = async (files) => {
     const newPending = files.map((file) => ({
@@ -191,6 +345,30 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
     });
   };
 
+  const handleReply = (message) => {
+    setReplyTo({
+      messageId: message.id,
+      text: message.text,
+      fromId: message.fromId,
+      fromName: formatUserName(otherUser)
+    });
+    inputRef.current?.focus();
+  };
+
+  const handleEdit = (message) => {
+    setEditModal({
+      messageId: message.id,
+      messageText: message.text,
+      chatId
+    });
+    setEditText(message.text || '');
+    setTimeout(() => editInputRef.current?.focus(), 100);
+  };
+
+  const handleDelete = async (message) => {
+    await deleteMessage(chatId, message.id);
+  };
+
   const handlePaste = async (e) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -207,18 +385,91 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
     }
   };
 
+  const handleBackgroundImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.type.startsWith('image/')) {
+      alert('Пожалуйста, выберите изображение');
+      return;
+    }
+    
+    setUploadingBackground(true);
+    
+    try {
+      const imageUrl = await uploadImage(file, currentUser.uid, otherUser.uid);
+      await saveChatBackground(chatId, { type: 'image', value: imageUrl });
+      setShowBackgroundModal(false);
+    } catch (error) {
+      console.error('Error uploading background:', error);
+      alert('Не удалось загрузить изображение');
+    } finally {
+      setUploadingBackground(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleRemoveBackground = async () => {
+    await saveChatBackground(chatId, null);
+    setShowBackgroundModal(false);
+  };
+
   const bgStyle = chatBackground
     ? {
         background: chatBackground.type === 'gradient' ? chatBackground.value : undefined,
         backgroundColor: chatBackground.type === 'color' ? chatBackground.value : undefined,
-        backgroundImage:
-          chatBackground.type === 'image' ? `url(${chatBackground.value})` : undefined,
+        backgroundImage: chatBackground.type === 'image' ? `url(${chatBackground.value})` : undefined,
         backgroundSize: 'cover',
-        backgroundPosition: 'center'
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
       }
     : undefined;
 
   const pendingCount = pendingFiles.filter((pf) => !pf.uploaded && !pf.uploading).length;
+
+  const renderMessages = () => {
+    return messages.map((msg, index) => {
+      const isOwn = msg.fromId === currentUser.uid;
+      const isSelected = selectedMessages.has(msg.id || '');
+      const isSearchMatch = searchMatchIndices.includes(index);
+      const highlightQuery = (searchOpen && isSearchMatch) ? searchQuery.trim().toLowerCase() : '';
+      
+      return (
+        <div
+          key={msg.id || index}
+          data-message-index={index}
+          data-message-id={msg.id}
+        >
+          {index === firstUnreadIndex && (
+            <div className={styles.unreadDivider}>Непрочитанные сообщения</div>
+          )}
+          <Message
+            msg={msg}
+            messageId={msg.id}
+            isOwn={isOwn}
+            currentUserId={currentUser.uid}
+            otherUserEmail={otherUser.email}
+            selectionMode={selectionMode}
+            isSelected={isSelected}
+            onToggleSelect={(id) => {
+              setSelectedMessages((prev) => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+              });
+            }}
+            onContextMenu={handleContextMenu}
+            onImageClick={setSelectedImage}
+            onReply={handleReply}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            highlightQuery={highlightQuery}
+          />
+        </div>
+      );
+    });
+  };
 
   return (
     <div
@@ -237,7 +488,7 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
         if (files.length) await addFiles(files);
       }}
     >
-      {isDragOver && <div className={styles.dropOverlay}>Drop files to send</div>}
+      {isDragOver && <div className={styles.dropOverlay}>Перетащите файлы для отправки</div>}
 
       <ChatWindowHeader
         otherUser={otherUser}
@@ -264,29 +515,62 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
           setSelectedMessages(new Set());
         }}
         onShowBackground={() => setShowBackgroundModal(true)}
-      />
-
-      <MessagesArea
-        messages={messages}
-        currentUser={currentUser}
-        otherUser={otherUser}
-        selectionMode={selectionMode}
-        selectedMessages={selectedMessages}
-        onContextMenu={handleContextMenu}
-        onToggleSelect={(id) => {
-          setSelectedMessages((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
+        searchOpen={searchOpen}
+        searchQuery={searchQuery}
+        searchMatchCount={searchMatchIndices.length}
+        searchMatchIndex={
+          searchMatchIndices.length
+            ? Math.min(searchMatchIndex, searchMatchIndices.length - 1)
+            : 0
+        }
+        onToggleSearch={() => {
+          setSearchOpen((open) => {
+            if (open) {
+              setSearchQuery('');
+              setSearchMatchIndex(0);
+            }
+            return !open;
           });
         }}
-        onImageClick={setSelectedImage}
-        messagesEndRef={messagesEndRef}
-        messagesContainerRef={messagesContainerRef}
-        showScrollButton={showScrollButton}
-        onScrollToBottom={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+        onSearchQueryChange={setSearchQuery}
+        onSearchPrev={() => {
+          if (!searchMatchIndices.length) return;
+          setSearchMatchIndex(
+            (prev) => (prev - 1 + searchMatchIndices.length) % searchMatchIndices.length
+          );
+        }}
+        onSearchNext={() => {
+          if (!searchMatchIndices.length) return;
+          setSearchMatchIndex((prev) => (prev + 1) % searchMatchIndices.length);
+        }}
+        onAvatarClick={() => setShowUserProfile(true)}
       />
+
+      <div className={styles.area} ref={messagesContainerRef}>
+        {messages.length === 0 ? (
+          <div className={styles.empty}>Нет сообщений</div>
+        ) : searchOpen && searchQuery.trim() && searchMatchIndices.length === 0 ? (
+          <div className={styles.empty}>Сообщения не найдены</div>
+        ) : (
+          <div className={styles.messages}>
+            {renderMessages()}
+            <div ref={messagesEndRef} className={styles.messagesEnd} />
+          </div>
+        )}
+        {showScrollButton && (
+          <button
+            type="button"
+            onClick={() => {
+              scrollChatToBottom(messagesContainerRef.current, messagesEndRef);
+              setShowScrollButton(false);
+            }}
+            className={styles.scrollButton}
+            title="Прокрутить вниз"
+          >
+            ↓
+          </button>
+        )}
+      </div>
 
       <MessageInput
         text={text}
@@ -351,46 +635,40 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
               setContextMenu(null);
             }}
           >
-            Copy
+            Копировать
           </button>
           <button
             type="button"
             className={styles.menuItem}
             onClick={() => {
               const message = messages.find((m) => m.id === contextMenu.messageId);
-              setReplyTo({
-                messageId: contextMenu.messageId,
-                text: contextMenu.messageText,
-                fromId: message?.fromId || '',
-                fromName: otherUser.name || otherUser.email
-              });
+              handleReply(message);
               setContextMenu(null);
-              inputRef.current?.focus();
             }}
           >
-            Reply
+            Ответить
           </button>
           <button
             type="button"
             className={styles.menuItem}
             onClick={() => {
-              setEditModal({ ...contextMenu });
-              setEditText(contextMenu.messageText);
+              const message = messages.find((m) => m.id === contextMenu.messageId);
+              handleEdit(message);
               setContextMenu(null);
-              setTimeout(() => editInputRef.current?.focus(), 100);
             }}
           >
-            Edit
+            Редактировать
           </button>
           <button
             type="button"
             className={`${styles.menuItem} ${styles.menuDanger}`}
             onClick={async () => {
-              await deleteMessage(contextMenu.chatId, contextMenu.messageId);
+              const message = messages.find((m) => m.id === contextMenu.messageId);
+              await handleDelete(message);
               setContextMenu(null);
             }}
           >
-            Delete
+            Удалить
           </button>
         </div>
       )}
@@ -399,9 +677,9 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
         <div className={styles.overlay} onClick={() => setEditModal(null)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <span>Edit message</span>
+              <span>Редактировать сообщение</span>
               <button type="button" onClick={() => setEditModal(null)} className={styles.modalClose}>
-                Close
+                Закрыть
               </button>
             </div>
             <input
@@ -427,34 +705,99 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
         <div className={styles.overlay} onClick={() => setShowBackgroundModal(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <span>Background</span>
+              <span>Фон чата</span>
               <button
                 type="button"
                 onClick={() => setShowBackgroundModal(false)}
                 className={styles.modalClose}
               >
-                Close
+                Закрыть
               </button>
             </div>
-            <div className={styles.colorGrid}>
-              {[
-                { name: 'White', value: '#ffffff' },
-                { name: 'Light', value: '#f4f4f5' },
-                { name: 'Gray', value: '#e4e4e7' }
-              ].map((color) => (
-                <button
-                  key={color.name}
-                  type="button"
-                  className={styles.colorBtn}
-                  style={{ background: color.value }}
-                  onClick={() => {
-                    saveChatBackground(chatId, { type: 'color', value: color.value });
-                    setShowBackgroundModal(false);
-                  }}
-                >
-                  {color.name}
-                </button>
-              ))}
+            
+            <div className={styles.backgroundSection}>
+              <div className={styles.backgroundSubtitle}>Цвета</div>
+              <div className={styles.colorGrid}>
+                {[
+                  { name: 'Белый', value: '#ffffff' },
+                  { name: 'Светло-серый', value: '#f4f4f5' },
+                  { name: 'Серый', value: '#e4e4e7' },
+                  { name: 'Тёмно-серый', value: '#3f3f46' },
+                  { name: 'Чёрный', value: '#1a1a1a' },
+                  { name: 'Синий', value: '#e0f2fe' },
+                  { name: 'Мятный', value: '#ccfbf1' },
+                  { name: 'Персиковый', value: '#ffedd5' }
+                ].map((color) => (
+                  <button
+                    key={color.name}
+                    type="button"
+                    className={styles.colorBtn}
+                    style={{ background: color.value }}
+                    title={color.name}
+                    onClick={() => {
+                      saveChatBackground(chatId, { type: 'color', value: color.value });
+                      setShowBackgroundModal(false);
+                    }}
+                  >
+                    {color.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.backgroundSection}>
+              <div className={styles.backgroundSubtitle}>Градиенты</div>
+              <div className={styles.gradientGrid}>
+                {[
+                  { name: 'Закат', value: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                  { name: 'Океан', value: 'linear-gradient(135deg, #2b5876 0%, #4e4376 100%)' },
+                  { name: 'Лес', value: 'linear-gradient(135deg, #134e5e 0%, #71b280 100%)' },
+                  { name: 'Восход', value: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' },
+                  { name: 'Ночь', value: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)' }
+                ].map((gradient) => (
+                  <button
+                    key={gradient.name}
+                    type="button"
+                    className={styles.gradientBtn}
+                    style={{ background: gradient.value }}
+                    onClick={() => {
+                      saveChatBackground(chatId, { type: 'gradient', value: gradient.value });
+                      setShowBackgroundModal(false);
+                    }}
+                  >
+                    {gradient.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.backgroundSection}>
+              <div className={styles.backgroundSubtitle}>Своё изображение</div>
+              <div className={styles.imageUploadArea}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBackgroundImageUpload}
+                  className={styles.fileInput}
+                  id="background-upload"
+                  disabled={uploadingBackground}
+                />
+                <label htmlFor="background-upload" className={styles.uploadBackgroundLabel}>
+                  {uploadingBackground ? 'Загрузка...' : 'Выбрать фото'}
+                </label>
+                {chatBackground?.type === 'image' && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveBackground}
+                    className={styles.removeBackgroundBtn}
+                  >
+                    Удалить фон
+                  </button>
+                )}
+                <p className={styles.uploadHint}>
+                  Поддерживаются JPG, PNG, GIF. Максимальный размер - 10 МБ
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -464,11 +807,21 @@ export default function ChatWindow({ otherUser, currentUser, isMobile = false, o
         <div className={styles.overlay} onClick={() => setSelectedImage(null)}>
           <div className={`${styles.modal} ${styles.imageModal}`} onClick={(e) => e.stopPropagation()}>
             <button type="button" onClick={() => setSelectedImage(null)} className={styles.modalClose}>
-              Close
+              Закрыть
             </button>
-            <img src={selectedImage} alt="Full size" />
+            <img src={selectedImage} alt="Полный размер" />
           </div>
         </div>
+      )}
+
+      {showUserProfile && (
+        <UserProfile
+          user={otherUser}
+          chatId={chatId}
+          currentUserId={currentUser.uid}
+          onClose={() => setShowUserProfile(false)}
+          onScrollToMessage={scrollToMessage}
+        />
       )}
     </div>
   );

@@ -272,6 +272,18 @@
   color: var(--error);
 }
 
+.accountSection {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--border-secondary);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin-bottom: var(--spacing-lg);
+}
+
 @media (max-width: 480px) {
   .page {
     padding: var(--spacing-md);
@@ -281,4 +293,552 @@
     grid-template-columns: 1fr;
     gap: var(--spacing-xs);
   }
+}
+
+
+.settingsContainer {
+  display: flex;
+  gap: 32px;
+  min-height: 500px;
+}
+
+.settingsNav {
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settingsNavItem {
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.settingsNavItem:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.settingsNavItemActive {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.settingsContent {
+  flex: 1;
+}
+
+.settingsSection {
+  animation: fadeIn 0.2s ease;
+}
+
+.settingsTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.themeOptions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.themeOption {
+  padding: 8px 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 24px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-primary);
+}
+
+.themeOption:hover {
+  border-color: var(--color-black);
+}
+
+.themeOptionActive {
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border-color: var(--color-black);
+}
+
+.toggleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.toggleLabel {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.toggle {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-secondary);
+  transition: all 0.2s;
+}
+
+.toggleOn {
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border-color: var(--color-black);
+}
+
+.toggleOff {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+.accountActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.logoutButton {
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.logoutButton:hover {
+  background: var(--bg-tertiary);
+}
+
+.deleteButton {
+  padding: 12px 20px;
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--error);
+  transition: all 0.2s;
+}
+
+.deleteButton:hover {
+  background: var(--error);
+  color: white;
+}
+
+.resetButton {
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.resetButton:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.emailSection {
+  margin-top: 16px;
+}
+
+.emailSection h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.settingsContainer {
+  display: flex;
+  gap: 32px;
+  min-height: 500px;
+}
+
+.settingsNav {
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settingsNavItem {
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.settingsNavItem:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.settingsNavItemActive {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-left: 3px solid var(--color-black);
+  font-weight: 600;
+}
+
+.settingsContent {
+  flex: 1;
+}
+
+.settingsSection {
+  animation: fadeIn 0.2s ease;
+}
+
+.settingsHeader {
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.settingsTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.settingsDescription {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.settingsBlock {
+  background: var(--bg-secondary);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.settingsBlock:last-child {
+  margin-bottom: 0;
+}
+
+.settingsBlockTitle {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-dim);
+  color: var(--text-primary);
+}
+
+.themeOptions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.themeOption {
+  padding: 10px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-primary);
+}
+
+.themeOption:hover {
+  border-color: var(--color-black);
+  transform: translateY(-1px);
+}
+
+.themeOptionActive {
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border-color: var(--color-black);
+}
+
+.toggleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+}
+
+.toggleRow:first-child {
+  padding-top: 0;
+}
+
+.toggleRow:last-child {
+  padding-bottom: 0;
+}
+
+.toggleLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.toggle {
+  padding: 5px 14px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-secondary);
+  transition: all 0.2s;
+}
+
+.toggleOn {
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border-color: var(--color-black);
+}
+
+.toggleOff {
+  background: var(--bg-card);
+  color: var(--text-muted);
+}
+
+.accountActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.logoutButton {
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.logoutButton:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--color-black);
+}
+
+.deleteButton {
+  padding: 12px 16px;
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--error);
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.deleteButton:hover {
+  background: var(--error);
+  color: white;
+}
+
+.resetButton {
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.resetButton:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.emailForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.secondaryBtn {
+  padding: 12px 16px;
+  background: var(--color-black);
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-on-accent);
+  transition: opacity 0.2s;
+}
+
+.secondaryBtn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.secondaryBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.avatarSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.avatarPreviewLarge {
+  margin-bottom: 8px;
+}
+
+.avatarButtons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.avatarBtn {
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.2s;
+}
+
+.avatarBtn:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  border-color: var(--color-black);
+}
+
+.avatarBtnDanger {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.avatarBtnDanger:hover:not(:disabled) {
+  background: var(--error-bg);
+}
+
+.avatarBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.profileForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.fileInput {
+  display: none;
+}
+
+.errorMessage {
+  padding: 12px;
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  border-radius: 8px;
+  color: var(--error);
+  font-size: 13px;
+}
+
+.successMessage {
+  padding: 12px;
+  background: #e8f5e9;
+  border: 1px solid #4caf50;
+  border-radius: 8px;
+  color: #2e7d32;
+  font-size: 13px;
+}
+
+.saveButton {
+  padding: 12px;
+  background: var(--color-black);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-on-accent);
+  transition: opacity 0.2s;
+}
+
+.saveButton:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.saveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.emailForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }

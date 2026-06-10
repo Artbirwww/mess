@@ -1,7 +1,15 @@
 import Avatar from '../../avatars/Avatar';
+import { formatUserName } from '../../../services/userService';
 import styles from './ChatTile.module.css';
 
 export default function ChatTile({ chat, onSelect }) {
+  const displayName = formatUserName({
+    firstName: chat.otherUserFirstName,
+    lastName: chat.otherUserLastName,
+    name: chat.otherUserName,
+    email: chat.otherUserEmail
+  });
+
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
@@ -27,9 +35,14 @@ export default function ChatTile({ chat, onSelect }) {
       onKeyDown={(e) => e.key === 'Enter' && onSelect(chat)}
     >
       <div className={styles.content}>
-        <Avatar name={chat.otherUserName} email={chat.otherUserEmail} size="small" />
+        <Avatar
+          name={displayName}
+          email={chat.otherUserEmail}
+          photoURL={chat.otherUserPhotoURL}
+          size="small"
+        />
         <div className={styles.main}>
-          <div className={styles.name}>{chat.otherUserName || chat.otherUserEmail}</div>
+          <div className={styles.name}>{displayName}</div>
           {chat.lastMessage && <div className={styles.preview}>{truncate(chat.lastMessage)}</div>}
         </div>
         <div className={styles.meta}>

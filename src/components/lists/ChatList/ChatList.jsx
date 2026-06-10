@@ -1,39 +1,78 @@
 import { useEffect, useState } from 'react';
-import { getChatsFromStorage, resetUnreadInStorage } from '../../../services/chatService';
-import { getUserById } from '../../../services/userService';
+import { getChatsFromStorage } from '../../../services/chatService';
+import { getUserById, toChatUser, formatUserName } from '../../../services/userService';
 import ChatTile from '../ChatTile/ChatTile';
 import styles from './ChatList.module.css';
+
+async function enrichChatsFromProfiles(chats) {
+  return Promise.all(
+    chats.map(async (chat) => {
+      const user = await getUserById(chat.otherUserId);
+      if (!user) return chat;
+      return {
+        ...chat,
+        otherUserFirstName: user.firstName || chat.otherUserFirstName || '',
+        otherUserLastName: user.lastName || chat.otherUserLastName || '',
+        otherUserName: formatUserName(user),
+        otherUserPhotoURL: user.photoURL || chat.otherUserPhotoURL || ''
+      };
+    })
+  );
+}
 
 export default function ChatList({ currentUserId, onSelectChat }) {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setChats(getChatsFromStorage(currentUserId));
-    setLoading(false);
+    let cancelled = false;
+
+    const loadChats = async () => {
+      const stored = getChatsFromStorage(currentUserId);
+      const enriched = await enrichChatsFromProfiles(stored);
+      if (!cancelled) {
+        setChats(enriched);
+        setLoading(false);
+      }
+    };
+
+    loadChats();
 
     const handleStorageChange = (e) => {
       if (e.key === `messenger_chats_${currentUserId}` && e.newValue) {
         try {
-          setChats(JSON.parse(e.newValue));
+          const parsed = JSON.parse(e.newValue);
+          enrichChatsFromProfiles(parsed).then((enriched) => {
+            if (!cancelled) setChats(enriched);
+          });
         } catch (error) {
           console.error('Parse storage error:', error);
         }
       }
     };
+
     window.addEventListener('storage', handleStorageChange);
-    const interval = setInterval(() => setChats(getChatsFromStorage(currentUserId)), 2000);
+    const interval = setInterval(async () => {
+      const stored = getChatsFromStorage(currentUserId);
+      const enriched = await enrichChatsFromProfiles(stored);
+      if (!cancelled) setChats(enriched);
+    }, 2000);
+
     return () => {
+      cancelled = true;
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
   }, [currentUserId]);
 
   const handleChatSelect = async (chat) => {
-    resetUnreadInStorage(currentUserId, chat.otherUserId);
+    const initialUnreadCount = chat.unreadCount ?? 0;
     const user = await getUserById(chat.otherUserId);
     if (user) {
-      onSelectChat({ uid: user.uid, email: user.email, name: user.name });
+      onSelectChat({
+        ...toChatUser(user),
+        initialUnreadCount
+      });
     }
     setChats((prev) =>
       prev.map((c) => (c.otherUserId === chat.otherUserId ? { ...c, unreadCount: 0 } : c))

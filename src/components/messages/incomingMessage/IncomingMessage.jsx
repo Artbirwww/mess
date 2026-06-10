@@ -1,6 +1,24 @@
 import { formatFileSize, getFileIcon } from '../../../services/chatService';
 import styles from './IncomingMessage.module.css';
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function highlightText(text, query) {
+  if (!query || !text) return text;
+  const parts = text.split(new RegExp(`(${escapeRegExp(query)})`, 'gi'));
+  return parts.map((part, index) =>
+    part.toLowerCase() === query.toLowerCase() ? (
+      <mark key={index} className={styles.highlight}>
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+}
+
 export default function IncomingMessage({
   msg,
   replyFromName,
@@ -9,7 +27,8 @@ export default function IncomingMessage({
   isOwn = false,
   onContextMenu,
   onToggleSelect,
-  onImageClick
+  onImageClick,
+  highlightQuery = ''
 }) {
   return (
     <div
@@ -58,7 +77,7 @@ export default function IncomingMessage({
         )}
         {msg.text && (
           <div className={styles.text}>
-            {msg.text}
+            {highlightQuery ? highlightText(msg.text, highlightQuery) : msg.text}
             {msg.editedAt && <span className={styles.edited}> (edited)</span>}
           </div>
         )}
