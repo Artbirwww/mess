@@ -30,6 +30,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Check environment variables
+        run: |
+          echo "Checking secrets..."
+          echo "VITE_GITHUB_TOKEN exists: ${{ secrets.VITE_GITHUB_TOKEN != '' }}"
+          echo "VITE_GITHUB_REPO_OWNER: ${{ secrets.VITE_GITHUB_REPO_OWNER }}"
+          echo "VITE_GITHUB_REPO_NAME: ${{ secrets.VITE_GITHUB_REPO_NAME }}"
+      
       - name: Build
         run: npm run build
         env:
@@ -43,6 +50,15 @@ jobs:
           VITE_GITHUB_REPO_OWNER: ${{ secrets.VITE_GITHUB_REPO_OWNER }}
           VITE_GITHUB_REPO_NAME: ${{ secrets.VITE_GITHUB_REPO_NAME }}
           VITE_GITHUB_BRANCH: ${{ secrets.VITE_GITHUB_BRANCH }}
+      
+      - name: Verify token in build
+        run: |
+          echo "Checking if token is in build files..."
+          if grep -r "ghp_" dist/ 2>/dev/null; then
+            echo "WARNING: Token found in build files!"
+          else
+            echo "Token not found in build files (good for security)"
+          fi
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

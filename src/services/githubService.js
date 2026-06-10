@@ -5,6 +5,13 @@ const BRANCH = import.meta.env.VITE_GITHUB_BRANCH || 'main';
 
 const API_BASE = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents`;
 
+console.log('GitHub token exists:', !!GITHUB_TOKEN);
+console.log('GitHub token length:', GITHUB_TOKEN?.length);
+
+if (!GITHUB_TOKEN) {
+  console.error('GitHub token is missing! Check your .env file');
+}
+
 function getFileExtension(filename) {
   return filename.split('.').pop()?.toLowerCase() || '';
 }
