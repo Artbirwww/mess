@@ -1,0 +1,69 @@
+.tile {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tile:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-secondary);
+}
+
+.tile.unread {
+  background: var(--bg-secondary);
+  border-color: var(--border-secondary);
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.tile.unread .name {
+  font-weight: 600;
+}
+
+.preview {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.time {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.unreadBadge {
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+}

@@ -1,0 +1,435 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg-card);
+  position: relative;
+}
+
+.dropOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border: 1px dashed var(--border-primary);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.menu {
+  position: fixed;
+  z-index: 2000;
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  min-width: 120px;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+}
+
+.menuItem:hover {
+  background: var(--bg-secondary);
+}
+
+.menuDanger {
+  color: var(--error);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: var(--spacing-lg);
+}
+
+.modal {
+  background: var(--color-white);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 440px;
+  width: 100%;
+  padding: var(--spacing-lg);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.modalClose {
+  font-size: var(--font-size-xs);
+  padding: 4px 10px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.modalClose:hover {
+  border-color: var(--color-black);
+}
+
+.editInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.editInput:focus {
+  outline: none;
+  border-color: var(--color-black);
+}
+
+.colorGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.colorBtn {
+  padding: 8px 14px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  box-shadow: var(--shadow-sm);
+}
+
+.colorBtn:hover {
+  border-color: var(--color-black);
+}
+
+.imageModal img {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-secondary);
+}
+
+/* Добавить в конец файла */
+
+.area {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-height: 0;
+  position: relative;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-height: min-content;
+}
+
+.messagesEnd {
+  flex-shrink: 0;
+  height: 1px;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.scrollButton {
+  position: absolute;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-secondary);
+  background: var(--color-white);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  line-height: 1;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.scrollButton:hover {
+  border-color: var(--color-black);
+  box-shadow: var(--shadow-lg);
+}
+
+.unreadDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-md) 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.unreadDivider::before,
+.unreadDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-secondary);
+}
+
+.area {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-height: 0;
+  position: relative;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-height: min-content;
+}
+
+.messagesEnd {
+  flex-shrink: 0;
+  height: 1px;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.scrollButton {
+  position: absolute;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-secondary);
+  background: var(--color-white);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  line-height: 1;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.scrollButton:hover {
+  border-color: var(--color-black);
+  box-shadow: var(--shadow-lg);
+}
+
+.unreadDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-md) 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.unreadDivider::before,
+.unreadDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-secondary);
+
+  /* Стили для модального окна выбора фона */
+.backgroundSection {
+  margin-bottom: 24px;
+}
+
+.backgroundSection:last-child {
+  margin-bottom: 0;
+}
+
+.backgroundSubtitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+}
+
+.colorGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.colorBtn {
+  padding: 10px 8px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+
+.colorBtn:hover {
+  transform: scale(1.02);
+  border-color: var(--color-black);
+  box-shadow: var(--shadow-md);
+}
+
+.gradientGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.gradientBtn {
+  padding: 12px 8px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.gradientBtn:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-md);
+}
+
+.imageUploadArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border-primary);
+}
+
+.fileInput {
+  display: none;
+}
+
+.uploadBackgroundLabel {
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity var(--transition-fast);
+}
+
+.uploadBackgroundLabel:hover {
+  opacity: 0.85;
+}
+
+.removeBackgroundBtn {
+  padding: 8px 16px;
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+  color: var(--error);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.removeBackgroundBtn:hover {
+  background: var(--error);
+  color: white;
+}
+
+.uploadHint {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* Стили для контейнера с фоном */
+.container {
+  position: relative;
+  transition: background 0.3s ease;
+}
+
+.container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  filter: brightness(0.9);
+  z-index: -1;
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 768px) {
+  .colorGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .gradientGrid {
+    grid-template-columns: 1fr;
+  }
+}
+}

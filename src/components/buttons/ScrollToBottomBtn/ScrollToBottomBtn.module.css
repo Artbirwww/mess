@@ -1,0 +1,26 @@
+.button {
+  position: absolute;
+  bottom: var(--spacing-md);
+  right: var(--spacing-md);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-secondary);
+  background: var(--color-white);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  line-height: 1;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.button:hover {
+  border-color: var(--color-black);
+  box-shadow: var(--shadow-lg);
+}
+
+.button:active {
+  transform: translateY(1px);
+}

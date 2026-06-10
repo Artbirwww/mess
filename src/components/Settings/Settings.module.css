@@ -1,0 +1,109 @@
+.container {
+  padding: var(--spacing-xl);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xl);
+  letter-spacing: -0.02em;
+}
+
+.section {
+  margin-bottom: var(--spacing-2xl);
+  padding-bottom: var(--spacing-xl);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-secondary);
+}
+
+.optionsGroup {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.option {
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--text-primary);
+}
+
+.option:hover {
+  border-color: var(--color-black);
+}
+
+.optionActive {
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border-color: var(--color-black);
+}
+
+.toggleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) 0;
+}
+
+.toggleLabel {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.toggle {
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-secondary);
+  transition: all var(--transition-fast);
+}
+
+.toggleOn {
+  background: var(--color-black);
+  color: var(--text-on-accent);
+  border-color: var(--color-black);
+}
+
+.toggleOff {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+}
+
+.resetButton {
+  width: 100%;
+  padding: 12px;
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+  color: var(--error);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.resetButton:hover {
+  background: var(--error);
+  color: var(--text-on-accent);
+}

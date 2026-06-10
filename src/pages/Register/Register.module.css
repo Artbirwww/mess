@@ -1,0 +1,29 @@
+.page {
+  max-width: 520px;
+  margin: 8vh auto;
+  animation: slide-up 0.35s var(--transition-normal);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.header {
+  padding: var(--spacing-2xl) var(--spacing-xl) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-secondary);
+  text-align: center;
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.body {
+  padding: var(--spacing-xl);
+}
