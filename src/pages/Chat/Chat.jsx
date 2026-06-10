@@ -4,7 +4,7 @@ import { getUnreadCount, resetUnreadInStorage } from '../../services/chatService
 import ChatListHeader from '../../components/headers/ChatListHeader/ChatListHeader';
 import ChatList from '../../components/lists/ChatList/ChatList';
 import ChatWindow from '../../components/windows/ChatWindow/ChatWindow';
-import Sidebar from '../../components/sidebar/Sidebar';
+// import Sidebar from '../../components/sidebar/Sidebar';
 import styles from './Chat.module.css';
 
 const MOBILE_BREAKPOINT = 768;
