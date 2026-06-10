@@ -19,7 +19,7 @@ import { formatUserName } from '../../../services/userService';
 import ChatWindowHeader from '../../headers/ChatWindowHeader/ChatWindowHeader';
 import MessagesArea from '../MessagesArea/MessagesArea';
 import MessageInput from '../../inputs/MessageInput/MessageInput';
-import Message from '../../message/Message';
+import Message from '../../Message/Message';
 import UserProfile from '../../UserProfile/UserProfile';
 import styles from './ChatWindow.module.css';
 
