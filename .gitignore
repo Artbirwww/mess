@@ -49,4 +49,4 @@ firestore-debug.log
 ui-debug.log
 
 # TypeScript
-*.tsbuildinfo
+*.tsbuildinfo"all_code.txt" 
