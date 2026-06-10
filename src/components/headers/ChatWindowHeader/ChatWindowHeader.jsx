@@ -108,13 +108,13 @@ export default function ChatWindowHeader({
               className={`${styles.btn} ${searchOpen ? styles.btnActive : ''}`}
               title="Поиск сообщений"
             >
-              Поиск
+              Поиск сообщений в чате
             </button>
             <button type="button" onClick={onShowBackground} className={styles.btn} title="Фон">
-              Фон
+              Сменить фон чата
             </button>
             <button type="button" onClick={onToggleSelection} className={styles.btn}>
-              Выбрать
+              Выбрать сообщения
             </button>
           </>
         )}

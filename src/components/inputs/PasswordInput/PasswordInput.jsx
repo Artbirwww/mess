@@ -3,7 +3,7 @@ import styles from './PasswordInput.module.css';
 export default function PasswordInput({
   value,
   onChange,
-  label = 'Password',
+  label = 'Пароль',
   minLength = 6,
   placeholder = '••••••'
 }) {

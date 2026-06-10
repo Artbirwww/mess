@@ -92,7 +92,7 @@ export default function ChatList({ currentUserId, onSelectChat }) {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <span className={styles.title}>Chats</span>
+        <span className={styles.title}>Чаты</span>
         {totalUnread > 0 && <span className={styles.badge}>{totalUnread}</span>}
       </div>
       <div className={styles.content}>

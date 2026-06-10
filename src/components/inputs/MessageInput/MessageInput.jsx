@@ -50,7 +50,7 @@ export default function MessageInput({
           value={text}
           onChange={onTextChange}
           onKeyDown={onKeyDown}
-          placeholder={pendingFiles.length > 0 ? `${pendingFiles.length} file(s) attached` : 'Write a message…'}
+          placeholder={pendingFiles.length > 0 ? `${pendingFiles.length} file(s) attached` : 'напишите что-нибудь…'}
           className={styles.input}
         />
       </div>

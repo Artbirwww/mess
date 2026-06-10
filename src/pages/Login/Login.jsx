@@ -47,7 +47,7 @@ export default function Login() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Sign in</h1>
+          <h1 className={styles.title}>Вход</h1>
         </div>
         <div className={styles.body}>
           <form className={styles.form} onSubmit={handleSubmit}>
@@ -61,7 +61,7 @@ export default function Login() {
           </div>
           <p className={styles.footer}>
             <Link to="/" className={styles.backLink}>
-              Back to app
+              Назад
             </Link>
           </p>
         </div>

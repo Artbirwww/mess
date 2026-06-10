@@ -1,6 +1,6 @@
 import styles from './EmailInput.module.css';
 
-export default function EmailInput({ value, onChange, label = 'Email' }) {
+export default function EmailInput({ value, onChange, label = 'Почта' }) {
   return (
     <div className={styles.field}>
       <label className={styles.label}>{label}</label>

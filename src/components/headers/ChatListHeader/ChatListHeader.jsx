@@ -63,7 +63,7 @@ export default function ChatListHeader({ onSelectUser, onLogout, isMobile, onSho
           <div className={styles.searchGroup}>
             <input
               type="text"
-              placeholder="Search people…"
+              placeholder="Найти контакты…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyPress}
@@ -110,7 +110,7 @@ export default function ChatListHeader({ onSelectUser, onLogout, isMobile, onSho
             </button>
           )}
           <button type="button" onClick={onLogout} className={`${styles.btn} ${styles.btnDanger}`}>
-            Sign out
+            Выйти из аккаунта
           </button>
         </div>
       </div>

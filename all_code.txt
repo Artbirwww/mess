@@ -447,7 +447,7 @@ export default function ChatListHeader({ onSelectUser, onLogout, isMobile, onSho
           <div className={styles.searchGroup}>
             <input
               type="text"
-              placeholder="Search people…"
+              placeholder="Найти контакты…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyPress}
@@ -494,7 +494,7 @@ export default function ChatListHeader({ onSelectUser, onLogout, isMobile, onSho
             </button>
           )}
           <button type="button" onClick={onLogout} className={`${styles.btn} ${styles.btnDanger}`}>
-            Sign out
+            Выйти из аккаунта
           </button>
         </div>
       </div>
@@ -1037,7 +1037,7 @@ export default function MessageInput({
           value={text}
           onChange={onTextChange}
           onKeyDown={onKeyDown}
-          placeholder={pendingFiles.length > 0 ? `${pendingFiles.length} file(s) attached` : 'Write a message…'}
+          placeholder={pendingFiles.length > 0 ? `${pendingFiles.length} file(s) attached` : 'напишите что-нибудь…'}
           className={styles.input}
         />
       </div>
@@ -3764,7 +3764,7 @@ export default function ProfileSettings() {
         'auth/wrong-password': 'Incorrect password',
         'auth/invalid-email': 'Invalid email address',
         'auth/email-already-in-use': 'Email already in use',
-        'auth/requires-recent-login': 'Please sign out and sign in again, then retry'
+        'auth/requires-recent-login': 'Please Выйти из аккаунта and sign in again, then retry'
       };
       setError(messages[err.code] || err.message || 'Failed to change email');
     } finally {

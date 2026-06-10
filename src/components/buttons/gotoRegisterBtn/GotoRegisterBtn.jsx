@@ -4,7 +4,7 @@ import styles from './GotoRegisterBtn.module.css';
 export default function GotoRegisterBtn() {
   return (
     <Link to="/register" className={styles.link}>
-      Create an account
+      Создать аккаунт
     </Link>
   );
 }

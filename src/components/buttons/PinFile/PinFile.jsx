@@ -18,7 +18,7 @@ export default function PinFile({ fileInputRef, generalInputRef, uploading, onIm
         className={styles.button}
         title="Attach image"
       >
-        Image
+        Отправить изображение
       </button>
       <button
         type="button"
@@ -27,7 +27,7 @@ export default function PinFile({ fileInputRef, generalInputRef, uploading, onIm
         className={styles.button}
         title="Attach file"
       >
-        File
+        Прикрепить файл
       </button>
     </>
   );
